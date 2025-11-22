@@ -52,6 +52,108 @@ class Trainer:
         # Check if device is CUDA
         is_cuda = self.device.type == 'cuda'
         
+        # GPU Compatibility Check: Test if CUDA kernels are available
+        if is_cuda:
+            # First, check compute capability BEFORE testing operations
+            capability = None
+            gpu_name = "Unknown"
+            try:
+                capability = torch.cuda.get_device_capability(0)
+                capability_major = capability[0]
+                capability_minor = capability[1]
+                gpu_name = torch.cuda.get_device_name(0)
+                
+                print(f"🎮 GPU: {gpu_name} (Compute Capability: {capability_major}.{capability_minor})")
+                
+                # Check for unsupported newer GPUs (sm_100+)
+                if capability_major >= 10:
+                    print(f"\n⚠️  WARNING: GPU with compute capability {capability_major}.{capability_minor} detected")
+                    print("   This GPU architecture may not be supported by current PyTorch builds.")
+                    
+                    # Specific detection for RTX 5060 (sm_120)
+                    if capability_major == 12:
+                        print("   ⚠️  RTX 5060 or similar Blackwell architecture GPU detected (sm_120)")
+                        print("   Official stable PyTorch releases don't support this GPU yet.")
+                        print("\n   💡 RECOMMENDED SOLUTIONS:")
+                        print("   1. Try PyTorch nightly build (may have sm_120 support):")
+                        print("      pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126")
+                        print("   2. Use CPU mode (automatic fallback - slower but works)")
+                        print("   3. Wait for official PyTorch release with sm_120 support")
+                        print("\n   Testing compatibility...")
+                    else:
+                        print(f"   GPU compute capability {capability_major}.{capability_minor} may require newer PyTorch")
+                        print("   Testing compatibility...")
+            except Exception:
+                # If we can't get capability info, continue with test
+                pass
+            
+            try:
+                # Test basic CUDA operation to verify kernel compatibility
+                test_tensor = torch.zeros(1, device=self.device)
+                _ = test_tensor + 1  # Simple operation to test kernel availability
+                del test_tensor
+                torch.cuda.empty_cache()
+            except (torch.cuda.CudaError, RuntimeError) as e:
+                error_msg = str(e)
+                if "no kernel image" in error_msg.lower() or "cudaerror" in error_msg.lower():
+                    # Get GPU info for better error message (if not already got)
+                    if capability is None:
+                        try:
+                            capability = torch.cuda.get_device_capability(0)
+                            capability_major = capability[0]
+                            gpu_name = torch.cuda.get_device_name(0)
+                        except:
+                            capability_major = None
+                            gpu_name = "Unknown"
+                    else:
+                        capability_major = capability[0]
+                    
+                    print(f"\n❌ CUDA Kernel Compatibility Error")
+                    print(f"   GPU: {gpu_name}")
+                    if capability:
+                        print(f"   Compute Capability: {capability[0]}.{capability[1]}")
+                    
+                    # Provide specific guidance based on GPU
+                    if capability_major and capability_major >= 12:
+                        print("\n   🔍 DIAGNOSIS: RTX 5060 or newer GPU (sm_120+)")
+                        print("   Current PyTorch build doesn't include kernels for this GPU architecture.")
+                        print("\n   💡 SOLUTIONS (in order of recommendation):")
+                        print("   1. Try PyTorch nightly build:")
+                        print("      pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126")
+                        print("      Then restart your script.")
+                        print("   2. Use CPU mode (automatic - slower but works):")
+                        print("      The trainer will automatically fall back to CPU.")
+                        print("   3. Build PyTorch from source with sm_120 support (advanced)")
+                        print("   4. Wait for official PyTorch release")
+                    elif capability_major and capability_major >= 10:
+                        print("\n   🔍 DIAGNOSIS: Newer GPU architecture (sm_100+)")
+                        print("   May need newer PyTorch build or nightly version.")
+                        print("\n   💡 SOLUTIONS:")
+                        print("   1. Try PyTorch nightly build")
+                        print("   2. Reinstall PyTorch from: https://pytorch.org/get-started/locally/")
+                        print("   3. Use CPU mode (automatic fallback)")
+                    else:
+                        print("\n   🔍 DIAGNOSIS: GPU architecture mismatch")
+                        print("   PyTorch was compiled for different GPU architecture.")
+                        print("\n   💡 SOLUTIONS:")
+                        print("   1. Reinstall PyTorch compatible with your GPU:")
+                        print("      Visit: https://pytorch.org/get-started/locally/")
+                        print("   2. Use CPU mode (automatic fallback)")
+                    
+                    print("\n   ⚙️  Falling back to CPU mode...")
+                    self.device = torch.device('cpu')
+                    is_cuda = False
+                else:
+                    raise  # Re-raise if it's a different CUDA error
+        
+        # Print final device info
+        if is_cuda:
+            gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "Unknown"
+            gpu_capability = torch.cuda.get_device_capability(0) if torch.cuda.is_available() else (0, 0)
+            print(f"✅ Using GPU: {gpu_name} (Compute: {gpu_capability[0]}.{gpu_capability[1]})")
+        else:
+            print(f"✅ Using CPU (GPU unavailable or incompatible)")
+        
         # CRITICAL: For quantum models, avoid DataParallel to prevent context serialization errors
         # Quantum circuits (PennyLane) often fail when serialized across processes
         if use_data_parallel and is_cuda and torch.cuda.device_count() > 1:
@@ -216,9 +318,31 @@ class Trainer:
                         # Model doesn't support return_attention parameter
                         logits = self.model(batch_x)
                 except Exception as e:
-                    # Check if this is a compilation error (TritonMissing, etc.)
+                    # Check for various error types and handle appropriately
                     error_str = str(e)
-                    if "Triton" in error_str or "triton" in error_str.lower() or "TritonMissing" in error_str:
+                    error_type = type(e).__name__
+                    
+                    # Handle CUDA kernel compatibility errors
+                    if ("no kernel image" in error_str.lower() or 
+                        "cudaerror" in error_str.lower() or 
+                        "AcceleratorError" in error_type):
+                        print(f"\n❌ CUDA Kernel Error during training: {e}")
+                        print("   This indicates a GPU compatibility issue.")
+                        print("   The PyTorch build doesn't support your GPU architecture.")
+                        print("\n   Solutions:")
+                        print("   1. Reinstall PyTorch compatible with your GPU:")
+                        print("      Visit: https://pytorch.org/get-started/locally/")
+                        print("   2. Use CPU instead:")
+                        print("      Set device='cpu' when creating the Trainer")
+                        print("   3. Check GPU compute capability compatibility")
+                        raise RuntimeError(
+                            f"CUDA kernel compatibility error. "
+                            f"PyTorch was compiled for a different GPU architecture. "
+                            f"Original error: {e}"
+                        ) from e
+                    
+                    # Handle compilation errors (TritonMissing, etc.)
+                    elif "Triton" in error_str or "triton" in error_str.lower() or "TritonMissing" in error_str:
                         if self._compiled:
                             print(f"\n⚠️  Compilation error detected during execution: {e}")
                             print("   Disabling compilation and retrying with uncompiled model...")
