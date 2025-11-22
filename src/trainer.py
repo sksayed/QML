@@ -143,6 +143,9 @@ class Trainer:
                     print("\n   ⚙️  Falling back to CPU mode...")
                     self.device = torch.device('cpu')
                     is_cuda = False
+                    # Disable compilation when using CPU (Windows requires C++ compiler)
+                    use_compile = False
+                    print("   ℹ️  Compilation disabled (CPU mode on Windows requires C++ compiler)")
                 else:
                     raise  # Re-raise if it's a different CUDA error
         
@@ -166,27 +169,26 @@ class Trainer:
             self.model = model.to(self.device)
             
         # Optional: PyTorch 2.0+ Compilation (Try/Except safely)
-        # Note: Some quantum backends (like PennyLane) may not support compilation yet
-        # Also, Triton is required for GPU compilation but may not be available
+        # Note: CPU compilation on Windows requires Visual Studio C++ compiler
+        # Only compile on GPU - CPU compilation is disabled to avoid compiler requirements
         self._compiled = False
-        if use_compile:
+        if use_compile and is_cuda:  # Only compile on GPU
             # Check for Triton availability on CUDA (required for GPU compilation)
-            if is_cuda:
-                try:
-                    import triton
-                    triton_available = True
-                except ImportError:
-                    triton_available = False
-                    print("⚠️  Triton not available. GPU compilation requires Triton.")
-                    print("   Note: Triton is not available on Windows via pip.")
-                    print("   Proceeding without compilation (model will work normally)...")
-                    use_compile = False
+            try:
+                import triton
+                triton_available = True
+            except ImportError:
+                triton_available = False
+                print("⚠️  Triton not available. GPU compilation requires Triton.")
+                print("   Note: Triton is not available on Windows via pip.")
+                print("   Proceeding without compilation (model will work normally)...")
+                use_compile = False
             
             if use_compile:
                 try:
                     # Use 'reduce-overhead' mode which is more compatible
                     # This mode is less aggressive and works better with quantum models
-                    compile_mode = 'reduce-overhead' if is_cuda else 'default'
+                    compile_mode = 'reduce-overhead'
                     self.model = torch.compile(self.model, mode=compile_mode)
                     self._compiled = True
                     print(f"✅ Model compiled with torch.compile() on {self.device} (mode={compile_mode})")
@@ -196,6 +198,11 @@ class Trainer:
                     print(f"⚠️  Compilation failed, using uncompiled model: {e}")
                     if "Triton" in str(e) or "triton" in str(e).lower():
                         print("   Tip: Triton is required for GPU compilation. Install with: pip install triton")
+                    elif "Compiler" in str(e) or "cl" in str(e).lower() or "compiler" in str(e).lower():
+                        print("   Tip: CPU compilation requires Visual Studio C++ compiler on Windows")
+        elif use_compile and not is_cuda:
+            # CPU mode - compilation disabled (requires C++ compiler on Windows)
+            print(f"✅ Model initialized on {self.device} (Compilation disabled - CPU mode)")
         else:
             print(f"✅ Model initialized on {self.device} (Compilation disabled)")
             
@@ -341,15 +348,25 @@ class Trainer:
                             f"Original error: {e}"
                         ) from e
                     
-                    # Handle compilation errors (TritonMissing, etc.)
-                    elif "Triton" in error_str or "triton" in error_str.lower() or "TritonMissing" in error_str:
+                    # Handle compilation errors (TritonMissing, Compiler errors, etc.)
+                    elif ("Triton" in error_str or "triton" in error_str.lower() or "TritonMissing" in error_str or
+                          "Compiler" in error_str or "cl is not found" in error_str.lower() or 
+                          "InductorError" in error_type or "compiler" in error_str.lower()):
                         if self._compiled:
                             print(f"\n⚠️  Compilation error detected during execution: {e}")
-                            print("   Disabling compilation and retrying with uncompiled model...")
+                            
+                            # Check if it's a compiler error
+                            if "Compiler" in error_str or "cl" in error_str.lower() or "compiler" in error_str.lower():
+                                print("   This is a compiler error (CPU compilation requires C++ compiler on Windows).")
+                                print("   Disabling compilation and retrying with uncompiled model...")
+                            else:
+                                print("   Disabling compilation and retrying with uncompiled model...")
+                            
                             # Get the original model (unwrap torch.compile)
                             if hasattr(self.model, '_orig_mod'):
                                 self.model = self.model._orig_mod
                             self._compiled = False
+                            
                             # Retry forward pass with uncompiled model
                             try:
                                 logits = self.model(batch_x, return_attention=False)
