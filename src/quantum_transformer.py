@@ -61,9 +61,11 @@ class QuantumTransformerBlock(nn.Module):
         x = self.norm1(x)
         
         # Project to Q/K/V
-        q = self.query_proj(x)  # (batch, seq, n_qubits)
-        k = self.key_proj(x)    # (batch, seq, n_qubits)
-        v = self.value_proj(x)  # (batch, seq, embed_dim)
+        # CAST TO FLOAT32 for Quantum Stability
+        q = self.query_proj(x).float()  # (batch, seq, n_qubits)
+        k = self.key_proj(x).float()    # (batch, seq, n_qubits)
+        v = self.value_proj(x)          # (batch, seq, embed_dim)
+        # Value can stay in original dtype if needed, but safer as float
         
         # Normalize Q and K to [0, 1] for Angle Embedding
         # tanh gives [-1, 1] -> +1 -> [0, 2] -> /2 -> [0, 1]
@@ -77,29 +79,28 @@ class QuantumTransformerBlock(nn.Module):
             # attn_weights has shape (batch, seq, 1) from quantum attention
             attn_output = context
         except Exception as e:
-            # Fallback to classical attention if quantum fails
+            # FALLBACK: Strictly mimic Diagonal/Gating behavior
+            # This better matches the quantum circuit's element-wise comparison
             print(f"Warning: Quantum attention failed, using classical fallback: {e}")
-            # Classical attention fallback - must match quantum attention output shape
-            # Compute full attention matrix: (batch, seq, seq)
-            attention_scores_full = torch.bmm(q, k.transpose(1, 2)) / (self.n_qubits ** 0.5)
-            attention_matrix = torch.softmax(attention_scores_full, dim=-1)  # (batch, seq, seq)
             
-            # Reduce to match quantum attention shape: (batch, seq, 1)
-            # Option 1: Take mean over sequence dimension (average attention received)
-            # Option 2: Take diagonal (self-attention weights)
-            # Option 3: Take sum (total attention received)
-            # We use mean to match the quantum behavior of aggregating attention
-            attn_weights = torch.mean(attention_matrix, dim=-1, keepdim=True)  # (batch, seq, 1)
+            # Element-wise product: (Batch, Seq, N_Qubits) -> (Batch, Seq, N_Qubits)
+            # This mimics how quantum circuit compares Q[i] with K[i] for each qubit
+            interaction = q_norm * k_norm
             
-            # Apply softmax to normalize the reduced attention weights
-            attn_weights = torch.softmax(attn_weights.squeeze(-1), dim=-1).unsqueeze(-1)  # (batch, seq, 1)
+            # Sum over qubits -> (Batch, Seq, 1)
+            # Aggregates qubit-level comparisons into a single attention score per token
+            attn_scores = interaction.sum(dim=-1, keepdim=True)
             
-            # Compute weighted context using the reduced attention weights
+            # Softmax over sequence (mimic attention distribution)
+            # Creates probability distribution over sequence positions
+            attn_weights = torch.softmax(attn_scores, dim=1)
+            
+            # Compute weighted context
             # Broadcast (batch, seq, 1) * (batch, seq, embed_dim) -> (batch, seq, embed_dim)
             attn_output = attn_weights * v
         
-        # Ensure float32 dtype for compatibility
-        attn_output = attn_output.float()
+        # Cast back to original dtype if needed (e.g., if using Mixed Precision)
+        attn_output = attn_output.type_as(residual)
         
         # Project back and Residual
         x = self.output_proj(attn_output)
