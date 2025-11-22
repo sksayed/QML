@@ -1,0 +1,92 @@
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+virtualenv/
+*.virtualenv
+
+# Data files (exclude from remote)
+data/
+*.csv
+*.zip
+*.tar.gz
+*.tar
+*.gz
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Model files (optional - uncomment if you don't want to track models)
+# models/
+# *.pth
+# *.pkl
+# *.h5
+# *.ckpt
+
+# Results (optional - uncomment if you don't want to track results)
+# results/
+# *.png
+# *.jpg
+# *.json
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
