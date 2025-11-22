@@ -8,6 +8,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.metrics import accuracy_score
 import numpy as np
+import os
 
 class AutoMLOptimizer:
     """
@@ -27,6 +28,11 @@ class AutoMLOptimizer:
         self.n_trials = n_trials
         self.seed = seed
         self.study = None
+        
+        # Track best model state for saving
+        self.best_model_state_dict = None
+        self.best_trial_value = None
+        self.best_trial_number = None
         
         # --- OPTIMIZATION 1: Pre-process Data Once ---
         # Move data to tensors immediately to avoid overhead during trials
@@ -60,6 +66,24 @@ class AutoMLOptimizer:
             num_workers=0
         )
         return train_loader, val_loader
+    
+    def _save_best_model_callback(self, study, trial):
+        """
+        Callback function to save the best model's state_dict.
+        Called after each trial completes.
+        """
+        # Check if this trial is the best one so far
+        if study.best_trial.number == trial.number:
+            # This trial is the new best
+            model_state_dict = trial.user_attrs.get('model_state_dict')
+            trial_best_val_acc = trial.user_attrs.get('trial_best_val_acc')
+            
+            if model_state_dict is not None:
+                # Save the best model state_dict
+                self.best_model_state_dict = model_state_dict
+                self.best_trial_value = trial_best_val_acc
+                self.best_trial_number = trial.number
+                print(f"[Best Model Saved] Trial {trial.number} with validation accuracy: {trial_best_val_acc:.4f}")
     
     def create_objective(self, input_dim, n_classes):
         """Create objective function for Optuna"""
@@ -113,6 +137,7 @@ class AutoMLOptimizer:
                 criterion = nn.CrossEntropyLoss()
                 
                 best_val_acc = 0.0
+                best_epoch_model_state = None  # Track model state at best epoch within this trial
                 
                 for epoch in range(params['n_epochs']):
                     # Train
@@ -151,12 +176,25 @@ class AutoMLOptimizer:
                             val_targets.extend(batch_y.cpu().numpy())
                     
                     val_acc = accuracy_score(val_targets, val_preds)
-                    best_val_acc = max(best_val_acc, val_acc)
+                    
+                    # Save model state if this is the best epoch in this trial
+                    if val_acc > best_val_acc:
+                        best_val_acc = val_acc
+                        # Copy state_dict to CPU to save GPU memory
+                        best_epoch_model_state = {
+                            k: v.cpu().clone() for k, v in model.state_dict().items()
+                        }
                     
                     # Pruning Hook
                     trial.report(val_acc, epoch)
                     if trial.should_prune():
                         raise optuna.TrialPruned()
+                
+                # After trial completes, check if this is the global best
+                # We'll use a callback to handle this properly with Optuna's study
+                # Store the model state temporarily for the callback
+                trial.set_user_attr('model_state_dict', best_epoch_model_state)
+                trial.set_user_attr('trial_best_val_acc', best_val_acc)
                 
                 return best_val_acc
                 
@@ -186,12 +224,22 @@ class AutoMLOptimizer:
         )
         
         print(f"Starting Optuna optimization on {self.device} with {self.n_trials} trials...")
-        self.study.optimize(objective, n_trials=self.n_trials, show_progress_bar=True)
+        self.study.optimize(
+            objective, 
+            n_trials=self.n_trials, 
+            show_progress_bar=True,
+            callbacks=[self._save_best_model_callback]
+        )
         
         print(f"\nBest trial value: {self.study.best_value:.4f}")
         print("Best params:")
         for key, value in self.study.best_params.items():
             print(f"  {key}: {value}")
+        
+        if self.best_model_state_dict is not None:
+            print(f"\nBest model state_dict saved from trial {self.best_trial_number}")
+        else:
+            print("\nWarning: No best model state_dict was saved.")
         
         return self.study.best_params
     
@@ -200,3 +248,74 @@ class AutoMLOptimizer:
         if self.study:
             return self.study.best_params
         return None
+    
+    def get_best_model_state_dict(self):
+        """
+        Get the state_dict of the best model from optimization.
+        
+        Returns:
+            dict: Model state_dict if available, None otherwise
+        """
+        return self.best_model_state_dict
+    
+    def save_best_model(self, filepath):
+        """
+        Save the best model's state_dict to disk.
+        
+        Args:
+            filepath: Path to save the model (e.g., 'best_model.pth')
+        
+        Returns:
+            bool: True if saved successfully, False otherwise
+        """
+        if self.best_model_state_dict is None:
+            print("Warning: No best model state_dict available to save.")
+            return False
+        
+        try:
+            # Create directory if it doesn't exist
+            os.makedirs(os.path.dirname(filepath) if os.path.dirname(filepath) else '.', exist_ok=True)
+            
+            # Save state_dict along with metadata
+            save_dict = {
+                'state_dict': self.best_model_state_dict,
+                'best_params': self.study.best_params if self.study else None,
+                'best_value': self.best_trial_value,
+                'trial_number': self.best_trial_number
+            }
+            
+            torch.save(save_dict, filepath)
+            print(f"Best model saved to {filepath}")
+            return True
+        except Exception as e:
+            print(f"Error saving best model: {e}")
+            return False
+    
+    def load_best_model(self, filepath, model):
+        """
+        Load the best model's state_dict from disk into a model instance.
+        
+        Args:
+            filepath: Path to the saved model file
+            model: Model instance to load the state_dict into
+        
+        Returns:
+            bool: True if loaded successfully, False otherwise
+        """
+        try:
+            checkpoint = torch.load(filepath, map_location=self.device)
+            
+            if isinstance(checkpoint, dict) and 'state_dict' in checkpoint:
+                model.load_state_dict(checkpoint['state_dict'])
+                print(f"Best model loaded from {filepath}")
+                if 'best_value' in checkpoint:
+                    print(f"  Best validation accuracy: {checkpoint['best_value']:.4f}")
+                return True
+            else:
+                # Assume it's a direct state_dict
+                model.load_state_dict(checkpoint)
+                print(f"Model state_dict loaded from {filepath}")
+                return True
+        except Exception as e:
+            print(f"Error loading best model: {e}")
+            return False
