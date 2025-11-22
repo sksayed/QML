@@ -73,8 +73,8 @@ def main():
         return
     
     loader = NIDDDataLoader(data_path)
-    print("📊 Using large dataset (100,000 samples) for training")
-    df = loader.load_data(n_samples=100000)
+    print("📊 Using FULL dataset (all available data) for training")
+    df = loader.load_data(n_samples=None)  # Load all data
     print(f"✓ Data loaded: {df.shape}")
     
     X, y = loader.get_features_labels()
@@ -93,9 +93,9 @@ def main():
     
     preprocessor = DataPreprocessor()
     
-    # Determine number of features (limit to reasonable number for quantum circuits)
-    n_features = min(32, X_train.shape[1])  # Use up to 32 features (moderate)
-    print(f"Reducing to {n_features} features...")
+    # Determine number of features (must match n_qubits=4 from best parameters)
+    n_features = min(4, X_train.shape[1])  # Use 4 features to match n_qubits=4
+    print(f"Reducing to {n_features} features (to match n_qubits=4)...")
     
     X_train, X_val, X_test = preprocessor.preprocess_features(
         X_train, X_val, X_test, n_features=n_features, y_train=y_train
@@ -224,8 +224,9 @@ def main():
     print("Step 3: AutoML Hyperparameter Optimization")
     print("="*70)
     print(f"Using device: {device}")
+    print(f"Training on FULL dataset (all available data)")
     
-    n_trials = 15  # Moderate number of trials for better hyperparameter search
+    n_trials = 30  # higher number of trials for better hyperparameter search
     
     automl = AutoMLOptimizer(
         QuantumTransformer,
@@ -261,10 +262,15 @@ def main():
         model_kwargs['n_layers'] = best_params['n_layers']
     
     model = QuantumTransformer(**model_kwargs)
+    print(f"✓ Model created with {sum(p.numel() for p in model.parameters()):,} parameters")
     
     trainer = Trainer(model, device=device)
     n_epochs = min(best_params['n_epochs'], 50)  # Moderate cap for better training
-    print(f"\n📊 Training with {n_epochs} epochs (moderate training)")
+    print(f"\n📊 Training Configuration:")
+    print(f"  Dataset: FULL dataset (all available data)")
+    print(f"  Epochs: {n_epochs}")
+    print(f"  Batch size: {best_params['batch_size']}")
+    print(f"  Learning rate: {best_params['learning_rate']:.6f}")
     
     trainer.train(
         X_train, y_train,

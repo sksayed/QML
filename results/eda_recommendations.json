@@ -1,0 +1,10 @@
+{
+  "total_rows": 1215890,
+  "recommended_n_samples": 500000,
+  "recommended_epochs_min": 10,
+  "recommended_epochs_max": 25,
+  "recommended_batch_size": 128,
+  "recommended_n_trials": 50,
+  "n_classes": 2,
+  "class_imbalance_ratio": 2.783149850565581
+}
