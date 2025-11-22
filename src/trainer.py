@@ -1,6 +1,6 @@
 """
-High-Performance Parallelized Training Pipeline for Quantum Transformer
-Optimized with multi-GPU support, parallel data loading, and advanced training features.
+High-Performance Hybrid Trainer for Quantum-Classical Models
+Optimized with quantum-specific features, parallel data loading, and comprehensive evaluation.
 """
 import torch
 import torch.nn as nn
@@ -15,31 +15,87 @@ from tqdm import tqdm
 
 class Trainer:
     """
-    Optimized Trainer with Multi-Process Data Loading and GPU Acceleration.
-    Combines performance optimizations with comprehensive evaluation and visualization.
+    Hybrid Trainer optimized for Quantum-Classical Models.
+    
+    Quantum-Specific Optimizations:
+    1. No DataParallel: Prevents quantum context serialization errors
+    2. torch.compile() support: Automatic compilation with proper wrapper handling
+    3. set_to_none=True: Faster gradient zeroing
+    4. Quantum gradient clipping: Prevents barren plateaus
+    
+    Comprehensive Features:
+    1. History tracking: Full training history for analysis
+    2. Detailed evaluation: F1, precision, recall, confusion matrix
+    3. Visualization: Training history plots
+    4. Optimized data loading: Multi-process, pin_memory, persistent workers
     """
     
-    def __init__(self, model, device='cuda' if torch.cuda.is_available() else 'cpu'):
+    def __init__(self, model, device='cuda' if torch.cuda.is_available() else 'cpu', 
+                 use_data_parallel=False, use_compile=True):
+        """
+        Initialize Trainer.
+        
+        Args:
+            model: The PyTorch/PennyLane model
+            device: 'cuda', 'cpu', or torch.device. If None, auto-detects.
+            use_data_parallel: If True, use DataParallel for multi-GPU (NOT recommended for quantum models)
+            use_compile: If True, attempt torch.compile() for performance (PyTorch 2.0+)
+        """
         # Normalize device to torch.device object for consistent handling
-        # This handles both string ('cuda', 'cpu') and torch.device objects
-        if isinstance(device, str):
+        if device is None:
+            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        elif isinstance(device, str):
             self.device = torch.device(device)
         else:
             self.device = device
         
-        # Check if device is CUDA (works for both string and torch.device)
+        # Check if device is CUDA
         is_cuda = self.device.type == 'cuda'
         
-        # Handle Multi-GPU (DataParallel) automatically
-        # IMPORTANT: Always move model to device BEFORE wrapping with DataParallel
-        # DataParallel expects the model to already be on the target device
-        if is_cuda and torch.cuda.device_count() > 1:
+        # CRITICAL: For quantum models, avoid DataParallel to prevent context serialization errors
+        # Quantum circuits (PennyLane) often fail when serialized across processes
+        if use_data_parallel and is_cuda and torch.cuda.device_count() > 1:
+            print(f"⚠️  WARNING: DataParallel enabled. This may cause issues with quantum models!")
             print(f"🚀 Parallelizing model across {torch.cuda.device_count()} GPUs!")
-            # Move model to device first, then wrap with DataParallel
             model = model.to(self.device)
             self.model = nn.DataParallel(model)
         else:
+            # Standard single-GPU or CPU setup (recommended for quantum models)
             self.model = model.to(self.device)
+            
+        # Optional: PyTorch 2.0+ Compilation (Try/Except safely)
+        # Note: Some quantum backends (like PennyLane) may not support compilation yet
+        # Also, Triton is required for GPU compilation but may not be available
+        self._compiled = False
+        if use_compile:
+            # Check for Triton availability on CUDA (required for GPU compilation)
+            if is_cuda:
+                try:
+                    import triton
+                    triton_available = True
+                except ImportError:
+                    triton_available = False
+                    print("⚠️  Triton not available. GPU compilation requires Triton.")
+                    print("   Note: Triton is not available on Windows via pip.")
+                    print("   Proceeding without compilation (model will work normally)...")
+                    use_compile = False
+            
+            if use_compile:
+                try:
+                    # Use 'reduce-overhead' mode which is more compatible
+                    # This mode is less aggressive and works better with quantum models
+                    compile_mode = 'reduce-overhead' if is_cuda else 'default'
+                    self.model = torch.compile(self.model, mode=compile_mode)
+                    self._compiled = True
+                    print(f"✅ Model compiled with torch.compile() on {self.device} (mode={compile_mode})")
+                except Exception as e:
+                    # Compilation failed - disable it and use original model
+                    self._compiled = False
+                    print(f"⚠️  Compilation failed, using uncompiled model: {e}")
+                    if "Triton" in str(e) or "triton" in str(e).lower():
+                        print("   Tip: Triton is required for GPU compilation. Install with: pip install triton")
+        else:
+            print(f"✅ Model initialized on {self.device} (Compilation disabled)")
             
         self.history = {'train_loss': [], 'val_loss': [], 'val_acc': [], 'lr': []}
         
@@ -76,39 +132,50 @@ class Trainer:
         }
         return kwargs
 
-    def train(self, X_train, y_train, X_val, y_val, 
+    def train(self, X_train=None, y_train=None, X_val=None, y_val=None,
+              train_loader=None, val_loader=None,
               batch_size=32, 
               n_epochs=50, 
               learning_rate=0.001,
               patience=5,
-              grad_clip=1.0):
+              grad_clip=1.0,
+              save_path='models/best_model.pth'):
         """
         Train with parallel data loading and advanced features.
         
         Args:
-            X_train: Training features
-            y_train: Training labels
-            X_val: Validation features
-            y_val: Validation labels
-            batch_size: Batch size for training
+            X_train: Training features (optional if train_loader provided)
+            y_train: Training labels (optional if train_loader provided)
+            X_val: Validation features (optional if val_loader provided)
+            y_val: Validation labels (optional if val_loader provided)
+            train_loader: Pre-configured DataLoader for training (optional)
+            val_loader: Pre-configured DataLoader for validation (optional)
+            batch_size: Batch size for training (used if loaders not provided)
             n_epochs: Number of training epochs
             learning_rate: Initial learning rate
             patience: Early stopping patience (epochs without improvement)
-            grad_clip: Gradient clipping threshold
+            grad_clip: Gradient clipping threshold (critical for quantum models)
+            save_path: Path to save best model
         """
-        print("\n--- Starting Optimized Training ---")
+        print("\n--- Starting Quantum-Hybrid Training ---")
         
-        # 1. Prepare Data
-        train_dataset = TensorDataset(torch.FloatTensor(X_train), torch.LongTensor(y_train))
-        val_dataset = TensorDataset(torch.FloatTensor(X_val), torch.LongTensor(y_val))
-        
-        # Get optimized loader settings
-        loader_kwargs = self._get_loader_kwargs(batch_size)
-        print(f"⚙️ DataLoader Config: workers={loader_kwargs['num_workers']}, "
-              f"pin_memory={loader_kwargs['pin_memory']}")
-        
-        train_loader = DataLoader(train_dataset, shuffle=True, **loader_kwargs)
-        val_loader = DataLoader(val_dataset, shuffle=False, **loader_kwargs)
+        # 1. Prepare Data - Support both raw data and pre-configured DataLoaders
+        if train_loader is None or val_loader is None:
+            if X_train is None or y_train is None or X_val is None or y_val is None:
+                raise ValueError("Either provide (X_train, y_train, X_val, y_val) or (train_loader, val_loader)")
+            
+            train_dataset = TensorDataset(torch.FloatTensor(X_train), torch.LongTensor(y_train))
+            val_dataset = TensorDataset(torch.FloatTensor(X_val), torch.LongTensor(y_val))
+            
+            # Get optimized loader settings
+            loader_kwargs = self._get_loader_kwargs(batch_size)
+            print(f"⚙️ DataLoader Config: workers={loader_kwargs['num_workers']}, "
+                  f"pin_memory={loader_kwargs['pin_memory']}")
+            
+            train_loader = DataLoader(train_dataset, shuffle=True, **loader_kwargs)
+            val_loader = DataLoader(val_dataset, shuffle=False, **loader_kwargs)
+        else:
+            print("✅ Using provided DataLoaders")
         
         # 2. Optimizer Setup
         # AdamW with weight decay is generally better than Adam
@@ -128,25 +195,55 @@ class Trainer:
             loop = tqdm(train_loader, desc=f"Epoch {epoch+1}/{n_epochs}", smoothing=0)
             
             for batch_x, batch_y in loop:
-                # Non-blocking transfer allows CPU to fetch next batch while GPU processes this one
+                # Non-blocking transfer: Allows CPU to preload next batch while GPU calculates
                 batch_x = batch_x.to(self.device, non_blocking=True)
                 batch_y = batch_y.to(self.device, non_blocking=True)
                 
-                # Handle 2D input (add sequence dimension if needed)
-                if len(batch_x.shape) == 2:
+                # Shape Safety: Ensure (Batch, Seq, Feature) layout
+                if batch_x.dim() == 2:
                     batch_x = batch_x.unsqueeze(1)
                 
-                optimizer.zero_grad()
+                # Optimization: set_to_none is slightly faster than zeroing tensor memory
+                optimizer.zero_grad(set_to_none=True)
                 
                 # Forward Pass
-                # NOTE: We explicitly pass return_attention=False to prevent DataParallel unpacking errors
-                logits = self.model(batch_x, return_attention=False)
+                # Handle both models with and without return_attention parameter
+                # Also handle compilation errors (e.g., TritonMissing) that occur during execution
+                try:
+                    try:
+                        logits = self.model(batch_x, return_attention=False)
+                    except TypeError:
+                        # Model doesn't support return_attention parameter
+                        logits = self.model(batch_x)
+                except Exception as e:
+                    # Check if this is a compilation error (TritonMissing, etc.)
+                    error_str = str(e)
+                    if "Triton" in error_str or "triton" in error_str.lower() or "TritonMissing" in error_str:
+                        if self._compiled:
+                            print(f"\n⚠️  Compilation error detected during execution: {e}")
+                            print("   Disabling compilation and retrying with uncompiled model...")
+                            # Get the original model (unwrap torch.compile)
+                            if hasattr(self.model, '_orig_mod'):
+                                self.model = self.model._orig_mod
+                            self._compiled = False
+                            # Retry forward pass with uncompiled model
+                            try:
+                                logits = self.model(batch_x, return_attention=False)
+                            except TypeError:
+                                logits = self.model(batch_x)
+                        else:
+                            raise  # Re-raise if not a compilation issue
+                    else:
+                        raise  # Re-raise other errors
                 
                 loss = criterion(logits, batch_y)
+                
+                # Backward
                 loss.backward()
                 
-                # Gradient Clipping for stability
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), grad_clip)
+                # CRITICAL: Gradient Clipping for Quantum Models
+                # Quantum gradients can be spiky. Clipping prevents barren plateaus and instability.
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=grad_clip)
                 
                 optimizer.step()
                 train_loss += loss.item()
@@ -171,19 +268,31 @@ class Trainer:
             print(f"Epoch {epoch+1}/{n_epochs}: Train Loss: {avg_train_loss:.4f} | "
                   f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f} | LR: {current_lr:.6f}")
             
-            # 5. Early Stopping
+            # 5. Early Stopping & Model Saving
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 epochs_no_improve = 0
-                os.makedirs('models', exist_ok=True)
-                # Handle DataParallel saving (save .module state_dict)
-                save_dict = self.model.module.state_dict() if isinstance(self.model, nn.DataParallel) else self.model.state_dict()
-                torch.save(save_dict, 'models/best_model.pth')
+                os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else '.', exist_ok=True)
+                
+                # Handle different model wrappers when saving state_dict
+                if isinstance(self.model, nn.DataParallel):
+                    # DataParallel wrapper
+                    save_dict = self.model.module.state_dict()
+                elif hasattr(self.model, '_orig_mod'):
+                    # torch.compile() wrapper
+                    save_dict = self.model._orig_mod.state_dict()
+                else:
+                    # Standard model
+                    save_dict = self.model.state_dict()
+                
+                torch.save(save_dict, save_path)
             else:
                 epochs_no_improve += 1
                 if epochs_no_improve >= patience:
                     print(f"⏹️ Early stopping at epoch {epoch+1} (no improvement for {patience} epochs)")
                     break
+                    
+        print(f"✅ Training complete. Best model saved to {save_path}")
 
     def _validate(self, loader, criterion):
         """
@@ -206,14 +315,21 @@ class Trainer:
                 batch_x = batch_x.to(self.device, non_blocking=True)
                 batch_y = batch_y.to(self.device, non_blocking=True)
                 
-                # Handle 2D input (add sequence dimension if needed)
-                if len(batch_x.shape) == 2:
+                # Shape Safety: Ensure (Batch, Seq, Feature) layout
+                if batch_x.dim() == 2:
                     batch_x = batch_x.unsqueeze(1)
                 
-                logits = self.model(batch_x, return_attention=False)
+                # Handle both models with and without return_attention parameter
+                try:
+                    logits = self.model(batch_x, return_attention=False)
+                except TypeError:
+                    # Model doesn't support return_attention parameter
+                    logits = self.model(batch_x)
+                
                 loss = criterion(logits, batch_y)
                 total_loss += loss.item()
                 
+                # Calculate Accuracy
                 preds = torch.argmax(logits, dim=1)
                 correct += (preds == batch_y).sum().item()
                 total += batch_y.size(0)
@@ -253,11 +369,17 @@ class Trainer:
                 batch_x = batch_x.to(self.device)
                 batch_y = batch_y.to(self.device)
                 
-                # Handle 2D input (add sequence dimension if needed)
-                if len(batch_x.shape) == 2:
+                # Shape Safety: Ensure (Batch, Seq, Feature) layout
+                if batch_x.dim() == 2:
                     batch_x = batch_x.unsqueeze(1)
                 
-                logits = self.model(batch_x, return_attention=False)
+                # Handle both models with and without return_attention parameter
+                try:
+                    logits = self.model(batch_x, return_attention=False)
+                except TypeError:
+                    # Model doesn't support return_attention parameter
+                    logits = self.model(batch_x)
+                
                 all_preds.extend(torch.argmax(logits, dim=1).cpu().numpy())
                 all_targets.extend(batch_y.cpu().numpy())
         
