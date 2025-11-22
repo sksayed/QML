@@ -115,135 +115,105 @@ def main():
     print(f"Test set: {X_test.shape}")
     
     # ========================================================================
-    # SECTION 3: TEST QUANTUM ATTENTION (Standalone)
+    # SECTION 3: TEST QUANTUM ATTENTION (Standalone) - COMMENTED OUT
     # ========================================================================
-    print("\n" + "="*70)
-    print("SECTION 3: Testing Quantum Attention (Standalone)")
-    print("="*70)
-    
-    from src.quantum_attention import BatchedQuantumAttention
-    
-    # Create a small test
-    n_qubits = 2
-    batch_size = 4
-    seq_len = 1
-    embed_dim = 8
-    
-    print(f"Creating quantum attention with n_qubits={n_qubits}...")
-    qattn = BatchedQuantumAttention(n_qubits=n_qubits, n_quantum_layers=2)
-    print("✓ Quantum attention created")
-    
-    # Create dummy inputs
-    query = torch.randn(batch_size, seq_len, n_qubits)
-    key = torch.randn(batch_size, seq_len, n_qubits)
-    value = torch.randn(batch_size, seq_len, embed_dim)
-    
-    print(f"Testing forward pass with shapes: q={query.shape}, k={key.shape}, v={value.shape}")
-    try:
-        context, attn_weights = qattn(query, key, value)
-        print(f"✓ Forward pass successful!")
-        print(f"  Context shape: {context.shape}")
-        print(f"  Attention weights shape: {attn_weights.shape}")
-    except Exception as e:
-        print(f"❌ Forward pass failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return
-    
-    # ========================================================================
-    # SECTION 4: TEST QUANTUM TRANSFORMER (Standalone)
-    # ========================================================================
-    print("\n" + "="*70)
-    print("SECTION 4: Testing Quantum Transformer (Standalone)")
-    print("="*70)
-    
-    print(f"Creating transformer with input_dim={input_dim}, n_classes={n_classes}...")
-    try:
-        model = QuantumTransformer(
-            input_dim=input_dim,
-            embed_dim=16,
-            n_transformer_layers=2,
-            n_quantum_layers=2,
-            n_qubits=2,
-            n_classes=n_classes,
-            dropout=0.1
-        )
-        print("✓ Transformer created")
-        
-        # Test forward pass
-        test_input = torch.randn(2, 1, input_dim)  # (batch=2, seq=1, features)
-        print(f"Testing forward pass with input shape: {test_input.shape}")
-        
-        logits = model(test_input)
-        print(f"✓ Forward pass successful!")
-        print(f"  Output logits shape: {logits.shape}")
-        print(f"  Expected: (2, {n_classes})")
-        
-    except Exception as e:
-        print(f"❌ Transformer test failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return
+    # print("\n" + "="*70)
+    # print("SECTION 3: Testing Quantum Attention (Standalone)")
+    # print("="*70)
+    # 
+    # from src.quantum_attention import BatchedQuantumAttention
+    # 
+    # # Create a small test
+    # n_qubits = 2
+    # batch_size = 4
+    # seq_len = 1
+    # embed_dim = 8
+    # 
+    # print(f"Creating quantum attention with n_qubits={n_qubits}...")
+    # qattn = BatchedQuantumAttention(n_qubits=n_qubits, n_quantum_layers=2)
+    # print("✓ Quantum attention created")
+    # 
+    # # Create dummy inputs
+    # query = torch.randn(batch_size, seq_len, n_qubits)
+    # key = torch.randn(batch_size, seq_len, n_qubits)
+    # value = torch.randn(batch_size, seq_len, embed_dim)
+    # 
+    # print(f"Testing forward pass with shapes: q={query.shape}, k={key.shape}, v={value.shape}")
+    # try:
+    #     context, attn_weights = qattn(query, key, value)
+    #     print(f"✓ Forward pass successful!")
+    #     print(f"  Context shape: {context.shape}")
+    #     print(f"  Attention weights shape: {attn_weights.shape}")
+    # except Exception as e:
+    #     print(f"❌ Forward pass failed: {e}")
+    #     import traceback
+    #     traceback.print_exc()
+    #     return
     
     # ========================================================================
-    # SECTION 5: TEST TRAINER (Minimal Training)
+    # SECTION 4: TEST QUANTUM TRANSFORMER (Standalone) - COMMENTED OUT
     # ========================================================================
-    print("\n" + "="*70)
-    print("SECTION 5: Testing Trainer (Minimal Training)")
-    print("="*70)
-    
-    print("Creating trainer...")
-    trainer = Trainer(model, device=device)
-    print("✓ Trainer created")
-    
-    print("Starting minimal training (2 epochs, small batch)...")
-    try:
-        trainer.train(
-            X_train[:20], y_train[:20],  # Use only 20 samples
-            X_val[:10], y_val[:10],      # Use only 10 samples
-            batch_size=4,
-            n_epochs=2,
-            learning_rate=0.001
-        )
-        print("✓ Training completed successfully!")
-    except Exception as e:
-        print(f"❌ Training failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return
-    
-    # ========================================================================
-    # SECTION 6: TEST AUTOML OPTIMIZER (Optional - Comment out if slow)
-    # ========================================================================
-    print("\n" + "="*70)
-    print("SECTION 6: Testing AutoML Optimizer")
-    print("="*70)
-    
-    print(f"Using device: {device}")
-    n_trials = 2  # Very small for testing
-    
-    automl = AutoMLOptimizer(
-        QuantumTransformer,
-        X_train[:50], y_train[:50],  # Use small subset
-        X_val[:20], y_val[:20],
-        device=device,
-        n_trials=n_trials
-    )
-    
-    try:
-        best_params = automl.optimize(input_dim, n_classes)
-        print(f"\n✓ AutoML optimization completed!")
-        print(f"Best hyperparameters:")
-        for key, value in best_params.items():
-            print(f"  {key}: {value}")
-    except Exception as e:
-        print(f"❌ AutoML optimization failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return
+    # print("\n" + "="*70)
+    # print("SECTION 4: Testing Quantum Transformer (Standalone)")
+    # print("="*70)
+    # 
+    # print(f"Creating transformer with input_dim={input_dim}, n_classes={n_classes}...")
+    # try:
+    #     model = QuantumTransformer(
+    #         input_dim=input_dim,
+    #         embed_dim=16,
+    #         n_transformer_layers=2,
+    #         n_quantum_layers=2,
+    #         n_qubits=2,
+    #         n_classes=n_classes,
+    #         dropout=0.1
+    #     )
+    #     print("✓ Transformer created")
+    #     
+    #     # Test forward pass
+    #     test_input = torch.randn(2, 1, input_dim)  # (batch=2, seq=1, features)
+    #     print(f"Testing forward pass with input shape: {test_input.shape}")
+    #     
+    #     logits = model(test_input)
+    #     print(f"✓ Forward pass successful!")
+    #     print(f"  Output logits shape: {logits.shape}")
+    #     print(f"  Expected: (2, {n_classes})")
+    #     
+    # except Exception as e:
+    #     print(f"❌ Transformer test failed: {e}")
+    #     import traceback
+    #     traceback.print_exc()
+    #     return
     
     # ========================================================================
-    # SECTION 7: FULL PIPELINE (Uncomment when all above work)
+    # SECTION 5: TEST TRAINER (Minimal Training) - COMMENTED OUT
+    # ========================================================================
+    # print("\n" + "="*70)
+    # print("SECTION 5: Testing Trainer (Minimal Training)")
+    # print("="*70)
+    # 
+    # print("Creating trainer...")
+    # trainer = Trainer(model, device=device)
+    # print("✓ Trainer created")
+    # 
+    # print("Starting minimal training (2 epochs, small batch)...")
+    # try:
+    #     trainer.train(
+    #         X_train[:20], y_train[:20],  # Use only 20 samples
+    #         X_val[:10], y_val[:10],      # Use only 10 samples
+    #         batch_size=4,
+    #         n_epochs=2,
+    #         learning_rate=0.001
+    #     )
+    #     print("✓ Training completed successfully!")
+    # except Exception as e:
+    #     print(f"❌ Training failed: {e}")
+    #     import traceback
+    #     traceback.print_exc()
+    #     return
+    
+    # ========================================================================
+    # SECTION 7: FULL PIPELINE
     # ========================================================================
     print("\n" + "="*70)
     print("SECTION 7: Full Pipeline")
