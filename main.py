@@ -73,8 +73,8 @@ def main():
         return
     
     loader = NIDDDataLoader(data_path)
-    print("⚠️ Using small dataset (100 samples) for quick testing")
-    df = loader.load_data(n_samples=100)
+    print("📊 Using large dataset (100,000 samples) for training")
+    df = loader.load_data(n_samples=100000)
     print(f"✓ Data loaded: {df.shape}")
     
     X, y = loader.get_features_labels()
@@ -94,7 +94,7 @@ def main():
     preprocessor = DataPreprocessor()
     
     # Determine number of features (limit to reasonable number for quantum circuits)
-    n_features = min(16, X_train.shape[1])  # Use up to 16 features
+    n_features = min(32, X_train.shape[1])  # Use up to 32 features (moderate)
     print(f"Reducing to {n_features} features...")
     
     X_train, X_val, X_test = preprocessor.preprocess_features(
@@ -225,7 +225,7 @@ def main():
     print("="*70)
     print(f"Using device: {device}")
     
-    n_trials = 3  # Very small number of trials for quick testing
+    n_trials = 15  # Moderate number of trials for better hyperparameter search
     
     automl = AutoMLOptimizer(
         QuantumTransformer,
@@ -263,8 +263,8 @@ def main():
     model = QuantumTransformer(**model_kwargs)
     
     trainer = Trainer(model, device=device)
-    n_epochs = min(best_params['n_epochs'], 10)
-    print(f"\n📊 Training with {n_epochs} epochs (capped for small dataset)")
+    n_epochs = min(best_params['n_epochs'], 50)  # Moderate cap for better training
+    print(f"\n📊 Training with {n_epochs} epochs (moderate training)")
     
     trainer.train(
         X_train, y_train,

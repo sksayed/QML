@@ -99,15 +99,15 @@ class AutoMLOptimizer:
             # Note: Using new parameter names (n_transformer_layers, n_quantum_layers)
             # but also keeping old names in params dict for backward compatibility
             params = {
-                'embed_dim': trial.suggest_int('embed_dim', 16, 64, step=16),
-                'n_transformer_layers': trial.suggest_int('n_transformer_layers', 2, 4),
-                'n_quantum_layers': trial.suggest_int('n_quantum_layers', 1, 3),
-                'n_qubits': trial.suggest_categorical('n_qubits', [2, 4, 6]),
+                'embed_dim': trial.suggest_int('embed_dim', 32, 128, step=16),  # Moderate range
+                'n_transformer_layers': trial.suggest_int('n_transformer_layers', 2, 6),  # Moderate depth
+                'n_quantum_layers': trial.suggest_int('n_quantum_layers', 1, 4),  # Moderate quantum depth
+                'n_qubits': trial.suggest_categorical('n_qubits', [4, 6, 8]),  # Moderate qubit counts
                 'dropout': trial.suggest_float('dropout', 0.1, 0.4),
                 # FIX: suggest_loguniform is deprecated, use suggest_float with log=True
                 'learning_rate': trial.suggest_float('learning_rate', 1e-4, 1e-2, log=True),
-                'batch_size': trial.suggest_categorical('batch_size', [16, 32, 64]),
-                'n_epochs': trial.suggest_int('n_epochs', 5, 15),
+                'batch_size': trial.suggest_categorical('batch_size', [32, 64, 128]),  # Moderate batch sizes
+                'n_epochs': trial.suggest_int('n_epochs', 10, 30),  # Moderate epoch range
                 # Backward compatibility: also include old names
                 'n_heads': None,  # Will be set from n_transformer_layers
                 'n_layers': None  # Will be set from n_quantum_layers
