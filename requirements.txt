@@ -1,9 +1,44 @@
-pennylane>=0.43.0
-numpy>=1.21.0
-matplotlib>=3.5.0
-torch==2.8.0
-scikit-learn>=1.0.0
-optuna>=3.0.0
-pandas>=1.5.0
-seaborn>=0.12.0
-tqdm>=4.65.0
+# Core Deep Learning Framework
+torch==2.9.1+cu126
+torchvision==0.24.1+cu126
+
+# Quantum Machine Learning
+pennylane==0.43.1
+pennylane_lightning==0.43.0
+
+# Scientific Computing
+numpy==2.3.5
+scipy==1.16.3
+scipy-openblas32==0.3.30.0.8
+
+# Machine Learning
+scikit-learn==1.7.2
+pandas==2.3.3
+
+# Hyperparameter Optimization
+optuna==4.6.0
+
+# Visualization
+matplotlib==3.10.7
+seaborn==0.13.2
+
+# Utilities
+tqdm==4.67.1
+joblib==1.5.2
+
+# Windows-specific: Triton for PyTorch compilation (optional but recommended)
+# Note: Only available on Windows via triton-windows fork
+triton-windows==3.5.1.post21
+
+# Additional dependencies (automatically installed by above packages)
+# These are included for completeness but usually auto-installed:
+# - autograd==1.8.0 (dependency of pennylane)
+# - autoray==0.8.0 (dependency of pennylane)
+# - sympy==1.13.1 (dependency of pennylane)
+# - networkx==3.5 (dependency of pennylane)
+# - rustworkx==0.17.1 (dependency of pennylane)
+# - mpmath==1.3.0 (dependency of pennylane)
+# - PyYAML==6.0.3 (dependency of pennylane)
+# - requests==2.32.5 (dependency of various packages)
+# - packaging==25.0 (dependency of various packages)
+# - typing_extensions==4.15.0 (dependency of various packages)
