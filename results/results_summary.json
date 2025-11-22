@@ -1,0 +1,16 @@
+{
+  "best_hyperparameters": {
+    "embed_dim": 16,
+    "n_heads": 3,
+    "n_layers": 2,
+    "n_qubits": 2,
+    "dropout": 0.13668090197068677,
+    "learning_rate": 0.0002014847788415866,
+    "batch_size": 8,
+    "n_epochs": 3
+  },
+  "test_accuracy": 0.55,
+  "test_f1": 0.3903225806451613,
+  "test_precision": 0.30250000000000005,
+  "test_recall": 0.55
+}
