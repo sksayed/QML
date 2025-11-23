@@ -38,6 +38,7 @@ class QuantumTransformerBlock(nn.Module):
         
         self.ffn = nn.Sequential(
             nn.Linear(embed_dim, embed_dim * 4),
+            nn.LayerNorm(embed_dim * 4),  # Normalization before activation
             nn.GELU(),  # GELU is generally better than ReLU for Transformers
             nn.Dropout(dropout),
             nn.Linear(embed_dim * 4, embed_dim),
@@ -199,11 +200,18 @@ class QuantumTransformer(nn.Module):
         
         # 4. Classifier Head
         self.classifier = nn.Sequential(
+            # First hidden layer
             nn.Linear(embed_dim, embed_dim // 2),
-            nn.LayerNorm(embed_dim // 2),  # Added Norm for stability
-            nn.ReLU(),
+            nn.BatchNorm1d(embed_dim // 2),  # BatchNorm instead of LayerNorm
+            nn.GELU(),  # Consistent with FFN - GELU is better than ReLU for Transformers
             nn.Dropout(dropout),
-            nn.Linear(embed_dim // 2, n_classes)
+            # Second hidden layer
+            nn.Linear(embed_dim // 2, embed_dim // 4),
+            nn.BatchNorm1d(embed_dim // 4),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            # Output layer
+            nn.Linear(embed_dim // 4, n_classes)
         )
         
     def forward(self, x, return_attention=False):

@@ -1,7 +1,3 @@
-"""
-Main script for QML Transformer + AutoML with 5G-NIDD Dataset
-INCREMENTAL TESTING VERSION - Uncomment sections one by one to test
-"""
 import os
 import sys
 import numpy as np
@@ -11,8 +7,20 @@ from src.data_preprocessor import DataPreprocessor
 from src.quantum_transformer import QuantumTransformer
 from src.automl_optimizer import AutoMLOptimizer
 from src.trainer import Trainer
+from src.log_capture import LogCapture
 
 def main():
+    # Initialize log capture - all print output will be saved to results/training_log_*.txt
+    with LogCapture(results_dir='results') as logger:
+        log_path = logger.get_log_path()
+        print(f"📝 All output will be logged to: {log_path}")
+        print(f"{'='*70}\n")
+        
+        _run_training()
+        
+        print(f"\n✅ Log file saved to: {log_path}")
+
+def _run_training():
     print("="*70)
     print("Quantum Machine Learning: Transformer + AutoML")
     print("Dataset: 5G-NIDD")
@@ -73,12 +81,15 @@ def main():
         return
     
     loader = NIDDDataLoader(data_path)
-    print("📊 Using FULL dataset (all available data) for training")
-    df = loader.load_data(n_samples=None)  # Load all data
+    # Test with 50,000 samples to check for any problems
+    test_sample_size = 50000
+    print(f"📊 Using TEST dataset ({test_sample_size:,} samples) for quick validation")
+    df = loader.load_data(n_samples=test_sample_size)  # Load 50k samples for testing
     print(f"✓ Data loaded: {df.shape}")
     
     X, y = loader.get_features_labels()
     print(f"✓ Features extracted: X={X.shape}, y={y.shape}")
+  
     
     X_train, X_val, X_test, y_train, y_val, y_test = loader.split_data(X, y)
     print(f"✓ Data split complete")
@@ -93,9 +104,9 @@ def main():
     
     preprocessor = DataPreprocessor()
     
-    # Determine number of features (must match n_qubits=4 from best parameters)
-    n_features = min(4, X_train.shape[1])  # Use 4 features to match n_qubits=4
-    print(f"Reducing to {n_features} features (to match n_qubits=4)...")
+    # Determine number of features (must match n_qubits=6)
+    n_features = min(6, X_train.shape[1])  # Use 6 features to match n_qubits=6
+    print(f"Reducing to {n_features} features (to match n_qubits=6)...")
     
     X_train, X_val, X_test = preprocessor.preprocess_features(
         X_train, X_val, X_test, n_features=n_features, y_train=y_train
@@ -224,7 +235,7 @@ def main():
     print("Step 3: AutoML Hyperparameter Optimization")
     print("="*70)
     print(f"Using device: {device}")
-    print(f"Training on FULL dataset (all available data)")
+    print(f"Training on TEST dataset (50,000 samples) for validation")
     
     n_trials = 30  # higher number of trials for better hyperparameter search
     
@@ -267,10 +278,12 @@ def main():
     trainer = Trainer(model, device=device)
     n_epochs = min(best_params['n_epochs'], 50)  # Moderate cap for better training
     print(f"\n📊 Training Configuration:")
-    print(f"  Dataset: FULL dataset (all available data)")
+    print(f"  Dataset: TEST dataset (50,000 samples)")
     print(f"  Epochs: {n_epochs}")
     print(f"  Batch size: {best_params['batch_size']}")
     print(f"  Learning rate: {best_params['learning_rate']:.6f}")
+    print(f"  Label smoothing: 0.1 (for better generalization)")
+    print(f"  LR Scheduler: CosineAnnealingWarmRestarts (T_0=10, T_mult=2)")
     
     trainer.train(
         X_train, y_train,

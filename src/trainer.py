@@ -248,6 +248,7 @@ class Trainer:
               learning_rate=0.001,
               patience=5,
               grad_clip=1.0,
+              label_smoothing=0.1,
               save_path='models/best_model.pth'):
         """
         Train with parallel data loading and advanced features.
@@ -264,6 +265,7 @@ class Trainer:
             learning_rate: Initial learning rate
             patience: Early stopping patience (epochs without improvement)
             grad_clip: Gradient clipping threshold (critical for quantum models)
+            label_smoothing: Label smoothing factor (default: 0.1) for better generalization
             save_path: Path to save best model
         """
         print("\n--- Starting Quantum-Hybrid Training ---")
@@ -289,8 +291,18 @@ class Trainer:
         # 2. Optimizer Setup
         # AdamW with weight decay is generally better than Adam
         optimizer = optim.AdamW(self.model.parameters(), lr=learning_rate, weight_decay=1e-4)
-        criterion = nn.CrossEntropyLoss()
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
+        
+        # Label smoothing for better generalization
+        criterion = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
+        
+        # Cosine Annealing with Warm Restarts - better than ReduceLROnPlateau for transformers
+        # T_0: initial restart period, T_mult: period multiplier after each restart
+        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
+            optimizer, 
+            T_0=10,        # First restart after 10 epochs
+            T_mult=2,      # Double the period after each restart
+            eta_min=1e-6   # Minimum learning rate
+        )
         
         best_val_loss = float('inf')
         epochs_no_improve = 0
@@ -404,7 +416,8 @@ class Trainer:
             self.history['val_acc'].append(val_acc)
             self.history['lr'].append(current_lr)
             
-            scheduler.step(val_loss)
+            # CosineAnnealingWarmRestarts doesn't need val_loss, just step per epoch
+            scheduler.step()
             
             print(f"Epoch {epoch+1}/{n_epochs}: Train Loss: {avg_train_loss:.4f} | "
                   f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f} | LR: {current_lr:.6f}")
