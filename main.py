@@ -81,10 +81,8 @@ def _run_training():
         return
     
     loader = NIDDDataLoader(data_path)
-    # Test with 50,000 samples to check for any problems
-    test_sample_size = 50000
-    print(f"📊 Using TEST dataset ({test_sample_size:,} samples) for quick validation")
-    df = loader.load_data(n_samples=test_sample_size)  # Load 50k samples for testing
+    print("📊 Using FULL dataset (all available data) for training")
+    df = loader.load_data(n_samples=None)  # Load all data
     print(f"✓ Data loaded: {df.shape}")
     
     X, y = loader.get_features_labels()
@@ -235,7 +233,7 @@ def _run_training():
     print("Step 3: AutoML Hyperparameter Optimization")
     print("="*70)
     print(f"Using device: {device}")
-    print(f"Training on TEST dataset (50,000 samples) for validation")
+    print(f"Training on FULL dataset (all available data)")
     
     n_trials = 30  # higher number of trials for better hyperparameter search
     
@@ -278,7 +276,7 @@ def _run_training():
     trainer = Trainer(model, device=device)
     n_epochs = min(best_params['n_epochs'], 50)  # Moderate cap for better training
     print(f"\n📊 Training Configuration:")
-    print(f"  Dataset: TEST dataset (50,000 samples)")
+    print(f"  Dataset: FULL dataset (all available data)")
     print(f"  Epochs: {n_epochs}")
     print(f"  Batch size: {best_params['batch_size']}")
     print(f"  Learning rate: {best_params['learning_rate']:.6f}")
