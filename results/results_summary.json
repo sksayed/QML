@@ -1,16 +1,16 @@
 {
   "best_hyperparameters": {
-    "embed_dim": 32,
-    "n_transformer_layers": 4,
+    "embed_dim": 64,
+    "n_transformer_layers": 6,
     "n_quantum_layers": 3,
-    "n_qubits": 2,
+    "n_qubits": 4,
     "dropout": 0.11742508365045984,
     "learning_rate": 0.005399484409787433,
-    "batch_size": 32,
-    "n_epochs": 15
+    "batch_size": 64,
+    "n_epochs": 30
   },
-  "test_accuracy": 0.95,
-  "test_f1": 0.9501253132832079,
-  "test_precision": 0.9550000000000001,
-  "test_recall": 0.95
+  "test_accuracy": 0.9153354501184522,
+  "test_f1": 0.9131555403325007,
+  "test_precision": 0.9242982927905262,
+  "test_recall": 0.9153354501184522
 }
