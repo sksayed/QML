@@ -155,13 +155,17 @@ class AutoMLOptimizer:
             # This trial is the new best
             model_state_dict = trial.user_attrs.get('model_state_dict')
             trial_best_val_acc = trial.user_attrs.get('trial_best_val_acc')
+            trial_best_val_loss = trial.user_attrs.get('trial_best_val_loss', None)
             
             if model_state_dict is not None:
                 # Save the best model state_dict
                 self.best_model_state_dict = model_state_dict
                 self.best_trial_value = trial_best_val_acc
                 self.best_trial_number = trial.number
-                print(f"[Best Model Saved] Trial {trial.number} with validation accuracy: {trial_best_val_acc:.4f}")
+                if trial_best_val_loss is not None:
+                    print(f"[Best Model Saved] Trial {trial.number} - Val Acc: {trial_best_val_acc:.4f}, Val Loss: {trial_best_val_loss:.4f}")
+                else:
+                    print(f"[Best Model Saved] Trial {trial.number} with validation accuracy: {trial_best_val_acc:.4f}")
     
     def create_objective(self, input_dim, n_classes):
         """Create objective function for Optuna"""
@@ -185,7 +189,7 @@ class AutoMLOptimizer:
                 # FIX: suggest_loguniform is deprecated, use suggest_float with log=True
                 'learning_rate': trial.suggest_float('learning_rate', 1e-4, 1e-2, log=True),
                 'batch_size': trial.suggest_categorical('batch_size', [32, 64, 128]),  # Moderate batch sizes
-                'n_epochs': trial.suggest_int('n_epochs', 10, 30),  # Moderate epoch range
+                'n_epochs': trial.suggest_int('n_epochs', 5, 15),  # Balanced range: works for both small and large datasets
                 # Backward compatibility: also include old names
                 'n_heads': None,  # Will be set from n_transformer_layers
                 'n_layers': None  # Will be set from n_quantum_layers
@@ -212,14 +216,21 @@ class AutoMLOptimizer:
                 ).to(self.device)
                 
                 optimizer = torch.optim.Adam(model.parameters(), lr=params['learning_rate'])
-                criterion = nn.CrossEntropyLoss()
+                # Use label smoothing for consistency with final training (0.1 is standard)
+                criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
                 
                 best_val_acc = 0.0
+                best_val_loss = float('inf')
                 best_epoch_model_state = None  # Track model state at best epoch within this trial
+                patience = 3  # Early stopping patience
+                patience_counter = 0
                 
                 for epoch in range(params['n_epochs']):
                     # Train
                     model.train()
+                    train_loss_sum = 0.0
+                    train_count = 0
+                    
                     for batch_x, batch_y in train_loader:
                         batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
                         
@@ -232,12 +243,23 @@ class AutoMLOptimizer:
                         logits = model(batch_x)
                         loss = criterion(logits, batch_y)
                         loss.backward()
+                        
+                        # Gradient clipping for training stability (especially important for quantum models)
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                        
                         optimizer.step()
+                        
+                        train_loss_sum += loss.item() * batch_y.size(0)
+                        train_count += batch_y.size(0)
+                    
+                    train_loss = train_loss_sum / train_count if train_count > 0 else 0.0
                     
                     # Validate
                     model.eval()
                     val_preds = []
                     val_targets = []
+                    val_loss_sum = 0.0
+                    val_count = 0
                     
                     with torch.no_grad():
                         for batch_x, batch_y in val_loader:
@@ -247,24 +269,43 @@ class AutoMLOptimizer:
                                 batch_x = batch_x.unsqueeze(1)
                             
                             logits = model(batch_x)
-                            preds = torch.argmax(logits, dim=1)
+                            loss = criterion(logits, batch_y)
                             
-                            # Move to cpu numpy efficiently
+                            preds = torch.argmax(logits, dim=1)
                             val_preds.extend(preds.cpu().numpy())
                             val_targets.extend(batch_y.cpu().numpy())
+                            
+                            val_loss_sum += loss.item() * batch_y.size(0)
+                            val_count += batch_y.size(0)
                     
                     val_acc = accuracy_score(val_targets, val_preds)
+                    val_loss = val_loss_sum / val_count if val_count > 0 else float('inf')
                     
-                    # Save model state if this is the best epoch in this trial
-                    if val_acc > best_val_acc:
+                    # Early stopping: Stop if validation loss doesn't improve
+                    if val_loss < best_val_loss:
+                        best_val_loss = val_loss
                         best_val_acc = val_acc
-                        # Copy state_dict to CPU to save GPU memory
+                        patience_counter = 0
+                        # Save model state if this is the best epoch in this trial
                         best_epoch_model_state = {
                             k: v.cpu().clone() for k, v in model.state_dict().items()
                         }
+                    else:
+                        patience_counter += 1
+                        if patience_counter >= patience:
+                            # Early stopping triggered
+                            print(f"[Early Stop] Trial {trial.number} stopped at epoch {epoch+1}/{params['n_epochs']} - "
+                                  f"Val loss not improving (best: {best_val_loss:.4f}, current: {val_loss:.4f}, "
+                                  f"best acc: {best_val_acc:.4f})")
+                            break
                     
-                    # Pruning Hook
+                    # Pruning Hook: Report both accuracy and loss to Optuna
+                    # Optuna uses accuracy for pruning (since direction='maximize'),
+                    # but we also store loss for better tracking
                     trial.report(val_acc, epoch)
+                    trial.set_user_attr(f'val_loss_epoch_{epoch}', val_loss)
+                    trial.set_user_attr(f'val_acc_epoch_{epoch}', val_acc)
+                    
                     if trial.should_prune():
                         raise optuna.TrialPruned()
                 
@@ -273,6 +314,7 @@ class AutoMLOptimizer:
                 # Store the model state temporarily for the callback
                 trial.set_user_attr('model_state_dict', best_epoch_model_state)
                 trial.set_user_attr('trial_best_val_acc', best_val_acc)
+                trial.set_user_attr('trial_best_val_loss', best_val_loss)
                 
                 return best_val_acc
                 
@@ -308,7 +350,11 @@ class AutoMLOptimizer:
         
         self.study = optuna.create_study(
             direction=direction,
-            pruner=optuna.pruners.MedianPruner(n_startup_trials=5, n_warmup_steps=5),
+            pruner=optuna.pruners.MedianPruner(
+                n_startup_trials=3,      # Start pruning after 3 trials
+                n_warmup_steps=2,         # Wait 2 steps before pruning
+                interval_steps=1           # Check pruning every step
+            ),
             sampler=optuna.samplers.TPESampler(seed=self.seed)
         )
         
