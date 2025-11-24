@@ -3,14 +3,14 @@
     "embed_dim": 64,
     "n_transformer_layers": 6,
     "n_quantum_layers": 3,
-    "n_qubits": 4,
-    "dropout": 0.11742508365045984,
-    "learning_rate": 0.005399484409787433,
-    "batch_size": 64,
-    "n_epochs": 30
+    "n_qubits": 6,
+    "dropout": 0.279597545259111,
+    "learning_rate": 0.0002051338263087451,
+    "batch_size": 128,
+    "n_epochs": 22
   },
-  "test_accuracy": 0.9153354501184522,
-  "test_f1": 0.9131555403325007,
-  "test_precision": 0.9242982927905262,
-  "test_recall": 0.9153354501184522
+  "test_accuracy": 0.9169765069755199,
+  "test_f1": 0.9166068795200017,
+  "test_precision": 0.9168723805223968,
+  "test_recall": 0.9169765069755199
 }

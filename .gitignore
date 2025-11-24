@@ -69,14 +69,15 @@ coverage.xml
 *~
 .DS_Store
 
-# Model files (optional - uncomment if you don't want to track models)
-# models/
-# *.pth
-# *.pkl
-# *.h5
-# *.ckpt
+# Model files (large binary files - should not be tracked)
+models/
+*.pth
+*.pkl
+*.h5
+*.ckpt
 
-# Results (optional - uncomment if you don't want to track results)
+# Results (generated files - optional to track)
+# Uncomment if you want to ignore results
 # results/
 # *.png
 # *.jpg
@@ -89,4 +90,6 @@ coverage.xml
 # Logs
 *.log
 logs/
+results/*.txt
+training_log_*.txt
 
