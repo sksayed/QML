@@ -25,6 +25,84 @@ class AutoMLOptimizer:
             self.device = torch.device(device)
         else:
             self.device = device
+        
+        # GPU Compatibility Check: Test if CUDA kernels are available
+        is_cuda = self.device.type == 'cuda'
+        if is_cuda:
+            capability = None
+            gpu_name = "Unknown"
+            try:
+                capability = torch.cuda.get_device_capability(0)
+                capability_major = capability[0]
+                capability_minor = capability[1]
+                gpu_name = torch.cuda.get_device_name(0)
+                
+                print(f"🎮 AutoML GPU: {gpu_name} (Compute Capability: {capability_major}.{capability_minor})")
+                
+                # Check for unsupported newer GPUs (sm_100+)
+                if capability_major >= 10:
+                    print(f"⚠️  WARNING: GPU with compute capability {capability_major}.{capability_minor} detected")
+                    print("   This GPU architecture may not be supported by current PyTorch builds.")
+                    if capability_major == 12:
+                        print("   ⚠️  RTX 5060 or similar Blackwell architecture GPU detected (sm_120)")
+                        print("   Testing compatibility...")
+            except Exception:
+                pass
+            
+            try:
+                # Test basic CUDA operation to verify kernel compatibility
+                test_tensor = torch.zeros(1, device=self.device)
+                _ = test_tensor + 1  # Simple operation to test kernel availability
+                del test_tensor
+                torch.cuda.empty_cache()
+                print(f"✅ AutoML GPU compatibility check passed")
+            except (torch.cuda.CudaError, RuntimeError) as e:
+                error_msg = str(e)
+                if "no kernel image" in error_msg.lower() or "cudaerror" in error_msg.lower():
+                    # Get GPU info for better error message (if not already got)
+                    if capability is None:
+                        try:
+                            capability = torch.cuda.get_device_capability(0)
+                            capability_major = capability[0]
+                            gpu_name = torch.cuda.get_device_name(0)
+                        except:
+                            capability_major = None
+                            gpu_name = "Unknown"
+                    else:
+                        capability_major = capability[0]
+                    
+                    print(f"\n❌ AutoML CUDA Kernel Compatibility Error")
+                    print(f"   GPU: {gpu_name}")
+                    if capability:
+                        print(f"   Compute Capability: {capability[0]}.{capability[1]}")
+                    
+                    # Provide specific guidance based on GPU
+                    if capability_major and capability_major >= 12:
+                        print("\n   🔍 DIAGNOSIS: RTX 5060 or newer GPU (sm_120+)")
+                        print("   Current PyTorch build doesn't include kernels for this GPU architecture.")
+                        print("\n   💡 SOLUTIONS:")
+                        print("   1. Try PyTorch nightly build:")
+                        print("      pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126")
+                        print("   2. Use CPU mode (automatic fallback - slower but works)")
+                    elif capability_major and capability_major >= 10:
+                        print("\n   🔍 DIAGNOSIS: Newer GPU architecture (sm_100+)")
+                        print("   May need newer PyTorch build or nightly version.")
+                        print("\n   💡 SOLUTIONS:")
+                        print("   1. Try PyTorch nightly build")
+                        print("   2. Use CPU mode (automatic fallback)")
+                    else:
+                        print("\n   🔍 DIAGNOSIS: GPU architecture mismatch")
+                        print("   PyTorch was compiled for different GPU architecture.")
+                        print("\n   💡 SOLUTIONS:")
+                        print("   1. Reinstall PyTorch compatible with your GPU")
+                        print("   2. Use CPU mode (automatic fallback)")
+                    
+                    print("\n   ⚙️  AutoML falling back to CPU mode...")
+                    self.device = torch.device('cpu')
+                    print("   ✅ AutoML will use CPU (slower but will work)")
+                else:
+                    raise  # Re-raise if it's a different CUDA error
+        
         self.n_trials = n_trials
         self.seed = seed
         self.study = None
@@ -102,7 +180,7 @@ class AutoMLOptimizer:
                 'embed_dim': trial.suggest_int('embed_dim', 32, 128, step=16),  # Moderate range
                 'n_transformer_layers': trial.suggest_int('n_transformer_layers', 2, 6),  # Moderate depth
                 'n_quantum_layers': trial.suggest_int('n_quantum_layers', 1, 4),  # Moderate quantum depth
-                'n_qubits': trial.suggest_categorical('n_qubits', [6]),  # Fixed to 6 qubits
+                'n_qubits': trial.suggest_categorical('n_qubits', [4]),  # Fixed to 4 qubits for amplitude encoding (2^4=16 features)
                 'dropout': trial.suggest_float('dropout', 0.1, 0.4),
                 # FIX: suggest_loguniform is deprecated, use suggest_float with log=True
                 'learning_rate': trial.suggest_float('learning_rate', 1e-4, 1e-2, log=True),
@@ -200,6 +278,17 @@ class AutoMLOptimizer:
                 
             except optuna.TrialPruned:
                 raise  # Re-raise pruning exception so Optuna handles it correctly
+            except (torch.cuda.CudaError, RuntimeError) as e:
+                error_msg = str(e)
+                if "no kernel image" in error_msg.lower() or "cudaerror" in error_msg.lower():
+                    # CUDA kernel error during training - this shouldn't happen if __init__ check worked
+                    # But handle it gracefully anyway
+                    print(f"[Trial Failed] CUDA kernel error: {e}")
+                    print("   This trial will be skipped. Consider using CPU mode for AutoML.")
+                    return 0.0
+                else:
+                    # Different CUDA error - re-raise
+                    raise
             except Exception as e:
                 print(f"[Trial Failed] Error: {e}")
                 # Optional: print traceback if needed, but keep log clean

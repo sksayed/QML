@@ -54,54 +54,51 @@ class BatchedQuantumAttention(nn.Module):
 
     def _circuit(self, inputs, weights):
         """
-        Pure Quantum Circuit - no shape validation, just gates.
+        Pure Quantum Circuit with Amplitude Encoding - no shape validation, just gates.
         
         Args:
             inputs: Torch Tensor - pre-validated in forward()
-                   - 1D: (2 * n_qubits,) for single sample
-                   - 2D: (batch_size, 2 * n_qubits) for batched execution
+                   - 1D: (2^n_qubits,) for single sample (amplitude encoding)
+                   - 2D: (batch_size, 2^n_qubits) for batched execution
             weights: Torch Tensor of shape (n_quantum_layers, n_qubits, 3)
         
         Returns:
             Tuple of expectation values for each qubit (or batched results)
         
         Note:
-            This method contains only quantum gates. All validation is done in forward().
-            AngleEmbedding supports batched inputs natively.
+            This method uses AmplitudeEmbedding instead of AngleEmbedding.
+            For amplitude encoding, input must be length 2^n_qubits.
         """
-        # Split Q and K - inputs are already validated in forward()
+        # For amplitude encoding, we encode the full input vector
+        # Input is already the full feature vector (2^n_qubits length)
         if inputs.dim() == 1:
-            # Single sample
-            q_in = inputs[:self.n_qubits]
-            k_in = inputs[self.n_qubits:]
+            # Single sample: (2^n_qubits,)
+            data = inputs
         else:
-            # Batched input
-            q_in = inputs[:, :self.n_qubits]
-            k_in = inputs[:, self.n_qubits:]
+            # Batched input: (batch_size, 2^n_qubits)
+            data = inputs
 
-        # 1. Encode Query (Rotation Y)
-        qml.templates.AngleEmbedding(q_in * np.pi, wires=range(self.n_qubits), rotation='Y')
+        # 1. Encode data using Amplitude Encoding
+        # AmplitudeEmbedding encodes the full vector into quantum state amplitudes
+        qml.AmplitudeEmbedding(
+            features=data, 
+            wires=range(self.n_qubits), 
+            normalize=True  # Automatically normalizes the input
+        )
 
-        # 2. Initial Entanglement (Mixing information)
-        for i in range(self.n_qubits - 1):
-            qml.CNOT(wires=[i, i+1])
-
-        # 3. Encode Key (Rotation X)
-        qml.templates.AngleEmbedding(k_in * np.pi, wires=range(self.n_qubits), rotation='X')
-
-        # 4. Trainable Variational Layers
+        # 2. Trainable Variational Layers
         qml.templates.StronglyEntanglingLayers(weights, wires=range(self.n_qubits))
         
-        # 5. Measure Expectation Values
+        # 3. Measure Expectation Values
         return tuple([qml.expval(qml.PauliZ(i)) for i in range(self.n_qubits)])
 
     def forward(self, query, key, value):
         """
-        Vectorized Forward Pass with Native Batching
+        Vectorized Forward Pass with Amplitude Encoding
         
         Args:
-            query: Query tensor of shape (batch_size, seq_len, n_qubits)
-            key: Key tensor of shape (batch_size, seq_len, n_qubits)
+            query: Query tensor of shape (batch_size, seq_len, 2^(n_qubits-1))
+            key: Key tensor of shape (batch_size, seq_len, 2^(n_qubits-1))
             value: Value tensor of shape (batch_size, seq_len, embed_dim)
         
         Returns:
@@ -109,33 +106,40 @@ class BatchedQuantumAttention(nn.Module):
             attention_weights: Attention weights of shape (batch_size, seq_len, 1)
         
         Note:
-            Uses PennyLane's native batching (qml.batch_input) for efficient parallel execution.
-            Processes entire batch at once instead of sequential loop (10-100x speedup).
+            Uses AmplitudeEmbedding for data encoding (instead of AngleEmbedding).
+            Q and K are concatenated to form 2^n_qubits features for amplitude encoding.
+            Processes entire batch at once for efficient parallel execution.
         """
         batch_size, seq_len, n_features = query.shape
 
         # --- VALIDATION (All shape checking happens here, not in _circuit) ---
-        if n_features != self.n_qubits:
+        # For amplitude encoding, each Q and K should have 2^(n_qubits-1) features
+        # When concatenated: 2^(n_qubits-1) + 2^(n_qubits-1) = 2^n_qubits
+        expected_features_per_projection = 2 ** (self.n_qubits - 1)
+        if n_features != expected_features_per_projection:
             raise ValueError(
-                f"Feature dimension ({n_features}) must equal n_qubits ({self.n_qubits}). "
+                f"Feature dimension ({n_features}) must equal 2^(n_qubits-1) = {expected_features_per_projection} "
+                f"for amplitude encoding (n_qubits={self.n_qubits}). "
+                f"When Q and K are concatenated, total will be 2^n_qubits = {2 ** self.n_qubits}. "
                 "Use PCA preprocessing to match dimensions."
             )
 
         if key.shape != query.shape:
             raise ValueError(f"Key shape {key.shape} must match query shape {query.shape}")
 
-        # --- STEP 1: PREPARE BATCH ---
-        # Flatten Batch and Sequence dims: (B * S, n_qubits)
+        # --- STEP 1: PREPARE BATCH FOR AMPLITUDE ENCODING ---
+        # Flatten Batch and Sequence dims: (B * S, n_features)
         flat_q = query.reshape(-1, n_features)
         flat_k = key.reshape(-1, n_features)
 
-        # Concatenate Q and K: (B * S, 2 * n_qubits)
-        # The circuit expects [Q, K] concatenated
+        # For amplitude encoding, we need total features = 2^n_qubits
+        # Concatenate Q and K: (B * S, 2 * n_features)
+        # This should equal 2^n_qubits
         circuit_in = torch.cat([flat_q, flat_k], dim=1)
         
         # Validate circuit input shape before passing to quantum circuit
         total_samples = circuit_in.shape[0]
-        expected_input_dim = 2 * self.n_qubits
+        expected_input_dim = 2 ** self.n_qubits  # For amplitude encoding: 2^n_qubits
         
         if circuit_in.dim() != 2:
             raise ValueError(
@@ -146,16 +150,16 @@ class BatchedQuantumAttention(nn.Module):
         if circuit_in.shape[1] != expected_input_dim:
             raise ValueError(
                 f"Input feature dimension mismatch: got {circuit_in.shape[1]}, "
-                f"expected {expected_input_dim} (2 * n_qubits={self.n_qubits})"
+                f"expected {expected_input_dim} (2^n_qubits = 2^{self.n_qubits} for amplitude encoding)"
             )
 
         # --- STEP 2: QUANTUM EXECUTION (NATIVE BATCHING) ---
-        # Pass entire batch tensor directly - AngleEmbedding handles batched inputs natively
+        # Pass entire batch tensor directly - AmplitudeEmbedding handles batched inputs natively
         # This is MUCH faster than sequential Python loop (10-100x speedup)
         # PennyLane processes all samples in parallel at C++ level
         try:
-            # circuit_in shape: (batch_size, 2 * n_qubits)
-            # Pass entire 2D tensor directly - AngleEmbedding supports batched inputs
+            # circuit_in shape: (batch_size, 2^n_qubits)
+            # Pass entire 2D tensor directly - AmplitudeEmbedding supports batched inputs
             q_out = self.qnode(circuit_in, self.quantum_weights)
             
             # Handle output format - for batched inputs, each expval returns (batch_size,)

@@ -18,9 +18,11 @@ class QuantumTransformerBlock(nn.Module):
         self.embed_dim = embed_dim
         
         # 1. Quantum Projections
-        # Map embedding dimension to qubit dimension
-        self.query_proj = nn.Linear(embed_dim, n_qubits)
-        self.key_proj = nn.Linear(embed_dim, n_qubits)
+        # For amplitude encoding: Q and K each need 2^(n_qubits-1) features
+        # When concatenated: 2^(n_qubits-1) + 2^(n_qubits-1) = 2^n_qubits
+        features_per_projection = 2 ** (n_qubits - 1)  # Half of 2^n_qubits
+        self.query_proj = nn.Linear(embed_dim, features_per_projection)
+        self.key_proj = nn.Linear(embed_dim, features_per_projection)
         
         # Value remains in embedding dimension to preserve information content
         self.value_proj = nn.Linear(embed_dim, embed_dim)
@@ -63,15 +65,16 @@ class QuantumTransformerBlock(nn.Module):
         
         # Project to Q/K/V
         # CAST TO FLOAT32 for Quantum Stability
-        q = self.query_proj(x).float()  # (batch, seq, n_qubits)
-        k = self.key_proj(x).float()    # (batch, seq, n_qubits)
+        q = self.query_proj(x).float()  # (batch, seq, 2^(n_qubits-1))
+        k = self.key_proj(x).float()    # (batch, seq, 2^(n_qubits-1))
         v = self.value_proj(x)          # (batch, seq, embed_dim)
         # Value can stay in original dtype if needed, but safer as float
         
-        # Normalize Q and K to [0, 1] for Angle Embedding
-        # tanh gives [-1, 1] -> +1 -> [0, 2] -> /2 -> [0, 1]
-        q_norm = (torch.tanh(q) + 1.0) / 2.0
-        k_norm = (torch.tanh(k) + 1.0) / 2.0
+        # For amplitude encoding, no need to normalize to [0,1]
+        # AmplitudeEmbedding will normalize automatically
+        # Just pass Q and K as-is (they will be concatenated in quantum_attention)
+        q_norm = q
+        k_norm = k
         
         # Apply Quantum Attention with error handling
         try:

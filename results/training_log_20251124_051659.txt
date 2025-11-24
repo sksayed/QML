@@ -1,0 +1,83 @@
+
+======================================================================
+Training Log Started: 2025-11-24 05:16:59
+Log File: results\training_log_20251124_051659.txt
+======================================================================
+
+📝 All output will be logged to: results\training_log_20251124_051659.txt
+======================================================================
+
+======================================================================
+Quantum Machine Learning: Transformer + AutoML
+Dataset: 5G-NIDD
+======================================================================
+
+======================================================================
+GPU Availability Check
+======================================================================
+✓ GPU Available: NVIDIA GeForce RTX 3070 Ti Laptop GPU
+  GPU Memory: 8.59 GB
+  CUDA Version: 12.6
+  PyTorch Version: 2.9.1+cu126
+  ✓ GPU Test: Successfully created tensor on cuda:0
+
+🚀 GPU Ready: cuda:0
+Note: Classical layers will use GPU, quantum circuits run on CPU
+
+======================================================================
+SECTION 1: Testing Data Loader
+======================================================================
+📊 Using TEST dataset (10,000 samples) for quick validation
+Loading data from data/data.csv...
+Dataset shape: (10000, 52)
+Columns (52): ['Unnamed: 0', 'Seq', 'Dur', 'RunTime', 'Mean', 'Sum', 'Min', 'Max', 'Proto', 'sTos']...
+✓ Data loaded: (10000, 52)
+Target Column detected: 'Label'
+Dropping sparse column: Proto (>50% NaN)
+Dropping sparse column: dTos (>50% NaN)
+Dropping sparse column: sDSb (>50% NaN)
+Dropping sparse column: dDSb (>50% NaN)
+Dropping sparse column: dTtl (>50% NaN)
+Dropping sparse column: dHops (>50% NaN)
+Dropping sparse column: Cause (>50% NaN)
+Dropping sparse column: State (>50% NaN)
+Dropping sparse column: DstWin (>50% NaN)
+Dropping sparse column: sVid (>50% NaN)
+Dropping sparse column: dVid (>50% NaN)
+Dropping sparse column: DstTCPBase (>50% NaN)
+Dropping 1084 rows with NaN features (10.84%)
+Final Features shape: (8916, 35)
+Final Labels shape: (8916,)
+Selected 35 feature columns
+Unique labels (2): ['Benign' 'Malicious']
+✓ Features extracted: X=(8916, 35), y=(8916,)
+Data split - Train: (6240, 35), Val: (892, 35), Test: (1784, 35)
+✓ Data split complete
+  Train: (6240, 35), Val: (892, 35), Test: (1784, 35)
+
+======================================================================
+SECTION 2: Testing Data Preprocessor
+======================================================================
+Reducing to 16 features (2^4 for amplitude encoding with 4 qubits)...
+Reducing dimensions from 35 to 16 using select_k_best...
+Selected 16 best features from 35 original features
+✓ Features preprocessed: (6240, 16)
+Classes: ['Benign' 'Malicious']
+Label mapping: {'Benign': 0, 'Malicious': 1}
+✓ Labels encoded
+Input dimension: 16
+Number of classes: 2
+Train set: (6240, 16)
+Val set: (892, 16)
+Test set: (1784, 16)
+
+======================================================================
+SECTION 7: Full Pipeline
+======================================================================
+
+======================================================================
+Step 3: AutoML Hyperparameter Optimization
+======================================================================
+Using device: cuda:0
+Training on TEST dataset (10,000 samples) for validation
+Starting Optuna optimization on cuda:0 with 30 trials...

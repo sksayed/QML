@@ -81,8 +81,10 @@ def _run_training():
         return
     
     loader = NIDDDataLoader(data_path)
-    print("📊 Using FULL dataset (all available data) for training")
-    df = loader.load_data(n_samples=None)  # Load all data
+    # Test with 10,000 samples to check for any problems
+    test_sample_size = 10000
+    print(f"📊 Using TEST dataset ({test_sample_size:,} samples) for quick validation")
+    df = loader.load_data(n_samples=test_sample_size)  # Load 10k samples for testing
     print(f"✓ Data loaded: {df.shape}")
     
     X, y = loader.get_features_labels()
@@ -102,9 +104,11 @@ def _run_training():
     
     preprocessor = DataPreprocessor()
     
-    # Determine number of features (must match n_qubits=6)
-    n_features = min(6, X_train.shape[1])  # Use 6 features to match n_qubits=6
-    print(f"Reducing to {n_features} features (to match n_qubits=6)...")
+    # For amplitude encoding, features must be 2^n (power of 2)
+    # Using 4 qubits = 2^4 = 16 features for amplitude encoding
+    n_qubits_for_amplitude = 4
+    n_features = min(2**n_qubits_for_amplitude, X_train.shape[1])  # 2^4 = 16 features
+    print(f"Reducing to {n_features} features (2^{n_qubits_for_amplitude} for amplitude encoding with {n_qubits_for_amplitude} qubits)...")
     
     X_train, X_val, X_test = preprocessor.preprocess_features(
         X_train, X_val, X_test, n_features=n_features, y_train=y_train
@@ -233,7 +237,7 @@ def _run_training():
     print("Step 3: AutoML Hyperparameter Optimization")
     print("="*70)
     print(f"Using device: {device}")
-    print(f"Training on FULL dataset (all available data)")
+    print(f"Training on TEST dataset (10,000 samples) for validation")
     
     n_trials = 30  # higher number of trials for better hyperparameter search
     
@@ -276,7 +280,7 @@ def _run_training():
     trainer = Trainer(model, device=device)
     n_epochs = min(best_params['n_epochs'], 50)  # Moderate cap for better training
     print(f"\n📊 Training Configuration:")
-    print(f"  Dataset: FULL dataset (all available data)")
+    print(f"  Dataset: TEST dataset (10,000 samples)")
     print(f"  Epochs: {n_epochs}")
     print(f"  Batch size: {best_params['batch_size']}")
     print(f"  Learning rate: {best_params['learning_rate']:.6f}")
