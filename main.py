@@ -1,6 +1,7 @@
 import os
 import sys
 import warnings
+import json
 import numpy as np
 import torch
 from src.data_loader import NIDDDataLoader
@@ -88,10 +89,9 @@ def _run_training():
         return
     
     loader = NIDDDataLoader(data_path)
-    # Test with 10,000 samples to check for any problems
-    test_sample_size = 10000
-    print(f"📊 Using TEST dataset ({test_sample_size:,} samples) for quick validation")
-    df = loader.load_data(n_samples=test_sample_size)  # Load 10k samples for testing
+   
+   
+    df = loader.load_data()  # Load 10k samples for testing
     print(f"✓ Data loaded: {df.shape}")
     
     X, y = loader.get_features_labels()
@@ -135,26 +135,56 @@ def _run_training():
     print(f"Test set: {X_test.shape}")
     
     
-    # Step 3: AutoML Optimization
+    # Step 3: Load or Optimize Hyperparameters
     print("\n" + "="*70)
-    print("Step 3: AutoML Hyperparameter Optimization")
+    print("Step 3: Hyperparameter Configuration")
     print("="*70)
-    print(f"Using device: {device}")
     
-    n_trials = 30  # higher number of trials for better hyperparameter search
+    hyperparams_file = 'results/hyperparameters.json'
     
-    automl = AutoMLOptimizer(
-        QuantumTransformer,
-        X_train, y_train,
-        X_val, y_val,
-        device=device,
-        n_trials=n_trials
-    )
-    
-    best_params = automl.optimize(input_dim, n_classes)
-    print(f"\nBest hyperparameters found:")
-    for key, value in best_params.items():
-        print(f"  {key}: {value}")
+    # Check if hyperparameters file exists
+    if os.path.exists(hyperparams_file):
+        print(f"✓ Found hyperparameters file: {hyperparams_file}")
+        print("  Loading hyperparameters from file (skipping AutoML)...")
+        with open(hyperparams_file, 'r') as f:
+            hyperparams_data = json.load(f)
+            best_params = hyperparams_data.get('hyperparameters', hyperparams_data)
+        print(f"✓ Hyperparameters loaded successfully")
+        print(f"\nLoaded hyperparameters:")
+        for key, value in best_params.items():
+            print(f"  {key}: {value}")
+    else:
+        print(f"✗ Hyperparameters file not found: {hyperparams_file}")
+        print("  Running AutoML optimization to find best hyperparameters...")
+        print(f"Using device: {device}")
+        
+        n_trials = 30  # higher number of trials for better hyperparameter search
+        
+        automl = AutoMLOptimizer(
+            QuantumTransformer,
+            X_train, y_train,
+            X_val, y_val,
+            device=device,
+            n_trials=n_trials
+        )
+        
+        best_params = automl.optimize(input_dim, n_classes)
+        print(f"\nBest hyperparameters found:")
+        for key, value in best_params.items():
+            print(f"  {key}: {value}")
+        
+        # Save hyperparameters to JSON file
+        print(f"\n💾 Saving hyperparameters to {hyperparams_file}...")
+        hyperparams_to_save = {
+            'hyperparameters': best_params,
+            'input_dim': int(input_dim),
+            'n_classes': int(n_classes),
+            'n_features': int(n_features),
+            'n_qubits_for_amplitude': int(n_qubits_for_amplitude)
+        }
+        with open(hyperparams_file, 'w') as f:
+            json.dump(hyperparams_to_save, f, indent=2)
+        print(f"✓ Hyperparameters saved to {hyperparams_file}")
     
     # Step 4: Train with best hyperparameters
     print("\n" + "="*70)
@@ -207,7 +237,6 @@ def _run_training():
     trainer.plot_history()
     
     # Save results
-    import json
     results_summary = {
         'best_hyperparameters': best_params,
         'test_accuracy': float(results['accuracy']),
