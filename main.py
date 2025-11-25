@@ -134,16 +134,12 @@ def _run_training():
     print(f"Val set: {X_val.shape}")
     print(f"Test set: {X_test.shape}")
     
-    print("\n" + "="*70)
-    print("SECTION 7: Full Pipeline")
-    print("="*70)
     
     # Step 3: AutoML Optimization
     print("\n" + "="*70)
     print("Step 3: AutoML Hyperparameter Optimization")
     print("="*70)
     print(f"Using device: {device}")
-    print(f"Training on TEST dataset (10,000 samples) for validation")
     
     n_trials = 30  # higher number of trials for better hyperparameter search
     
