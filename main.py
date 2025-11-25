@@ -88,10 +88,8 @@ def _run_training():
         return
     
     loader = NIDDDataLoader(data_path)
-    # Test with 10,000 samples to check for any problems
-    test_sample_size = 10000
-    print(f"📊 Using TEST dataset ({test_sample_size:,} samples) for quick validation")
-    df = loader.load_data(n_samples=test_sample_size)  # Load 10k samples for testing
+
+    df = loader.load_data(n_samples= None )  
     print(f"✓ Data loaded: {df.shape}")
     
     X, y = loader.get_features_labels()
@@ -186,7 +184,6 @@ def _run_training():
     trainer = Trainer(model, device=device)
     n_epochs = min(best_params['n_epochs'], 50)  # Moderate cap for better training
     print(f"\n📊 Training Configuration:")
-    print(f"  Dataset: TEST dataset (10,000 samples)")
     print(f"  Epochs: {n_epochs}")
     print(f"  Batch size: {best_params['batch_size']}")
     print(f"  Learning rate: {best_params['learning_rate']:.6f}")

@@ -1,0 +1,277 @@
+
+======================================================================
+Training Log Started: 2025-11-24 12:37:11
+Log File: results\training_log_20251124_123711.txt
+======================================================================
+
+📝 All output will be logged to: results\training_log_20251124_123711.txt
+======================================================================
+
+======================================================================
+Quantum Machine Learning: Transformer + AutoML
+Dataset: 5G-NIDD
+======================================================================
+
+======================================================================
+GPU Availability Check
+======================================================================
+✓ GPU Available: NVIDIA GeForce RTX 5060
+  GPU Memory: 8.55 GB
+  CUDA Version: 12.6
+  PyTorch Version: 2.9.1+cu126
+  ✓ GPU Test: Successfully created tensor on cuda:0
+
+🚀 GPU Ready: cuda:0
+Note: Classical layers will use GPU, quantum circuits run on CPU
+
+======================================================================
+SECTION 1: Testing Data Loader
+======================================================================
+📊 Using TEST dataset (10,000 samples) for quick validation
+Loading data from data/data.csv...
+Dataset shape: (10000, 52)
+Columns (52): ['Unnamed: 0', 'Seq', 'Dur', 'RunTime', 'Mean', 'Sum', 'Min', 'Max', 'Proto', 'sTos']...
+✓ Data loaded: (10000, 52)
+Target Column detected: 'Label'
+Dropping sparse column: Proto (>50% NaN)
+Dropping sparse column: dTos (>50% NaN)
+Dropping sparse column: sDSb (>50% NaN)
+Dropping sparse column: dDSb (>50% NaN)
+Dropping sparse column: dTtl (>50% NaN)
+Dropping sparse column: dHops (>50% NaN)
+Dropping sparse column: Cause (>50% NaN)
+Dropping sparse column: State (>50% NaN)
+Dropping sparse column: DstWin (>50% NaN)
+Dropping sparse column: sVid (>50% NaN)
+Dropping sparse column: dVid (>50% NaN)
+Dropping sparse column: DstTCPBase (>50% NaN)
+Dropping 1084 rows with NaN features (10.84%)
+Final Features shape: (8916, 35)
+Final Labels shape: (8916,)
+Selected 35 feature columns
+Unique labels (2): ['Benign' 'Malicious']
+✓ Features extracted: X=(8916, 35), y=(8916,)
+Data split - Train: (6240, 35), Val: (892, 35), Test: (1784, 35)
+✓ Data split complete
+  Train: (6240, 35), Val: (892, 35), Test: (1784, 35)
+
+======================================================================
+SECTION 2: Testing Data Preprocessor
+======================================================================
+Reducing to 16 features (2^4 for amplitude encoding with 4 qubits)...
+Reducing dimensions from 35 to 16 using select_k_best...
+Selected 16 best features from 35 original features
+✓ Features preprocessed: (6240, 16)
+Classes: ['Benign' 'Malicious']
+Label mapping: {'Benign': 0, 'Malicious': 1}
+✓ Labels encoded
+Input dimension: 16
+Number of classes: 2
+Train set: (6240, 16)
+Val set: (892, 16)
+Test set: (1784, 16)
+
+======================================================================
+SECTION 7: Full Pipeline
+======================================================================
+
+======================================================================
+Step 3: AutoML Hyperparameter Optimization
+======================================================================
+Using device: cuda:0
+Training on TEST dataset (10,000 samples) for validation
+🎮 AutoML GPU: NVIDIA GeForce RTX 5060 (Compute Capability: 12.0)
+⚠️  WARNING: GPU with compute capability 12.0 detected
+   This GPU architecture may not be supported by current PyTorch builds.
+   ⚠️  RTX 5060 or similar Blackwell architecture GPU detected (sm_120)
+   Testing compatibility...
+
+❌ AutoML CUDA Kernel Compatibility Error
+   GPU: NVIDIA GeForce RTX 5060
+   Compute Capability: 12.0
+
+   🔍 DIAGNOSIS: RTX 5060 or newer GPU (sm_120+)
+   Current PyTorch build doesn't include kernels for this GPU architecture.
+
+   💡 SOLUTIONS:
+   1. Try PyTorch nightly build:
+      pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126
+   2. Use CPU mode (automatic fallback - slower but works)
+
+   ⚙️  AutoML falling back to CPU mode...
+   ✅ AutoML will use CPU (slower but will work)
+Starting Optuna optimization on cpu with 30 trials...
+[I 2025-11-24 12:38:51,380] Trial 0 finished with value: 1.0 and parameters: {'embed_dim': 64, 'n_transformer_layers': 6, 'n_quantum_layers': 3, 'n_qubits': 4, 'dropout': 0.279597545259111, 'learning_rate': 0.0002051338263087451, 'batch_size': 128, 'n_epochs': 22}. Best is trial 0 with value: 1.0.
+[Best Model Saved] Trial 0 with validation accuracy: 1.0000
+[I 2025-11-24 12:39:32,031] Trial 1 finished with value: 1.0 and parameters: {'embed_dim': 96, 'n_transformer_layers': 2, 'n_quantum_layers': 4, 'n_qubits': 4, 'dropout': 0.34973279224012654, 'learning_rate': 0.00026587543983272726, 'batch_size': 128, 'n_epochs': 21}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 12:40:04,359] Trial 2 finished with value: 1.0 and parameters: {'embed_dim': 80, 'n_transformer_layers': 3, 'n_quantum_layers': 3, 'n_qubits': 4, 'dropout': 0.14184815819561256, 'learning_rate': 0.0003839629299804173, 'batch_size': 128, 'n_epochs': 14}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 12:40:46,890] Trial 3 finished with value: 1.0 and parameters: {'embed_dim': 80, 'n_transformer_layers': 4, 'n_quantum_layers': 1, 'n_qubits': 4, 'dropout': 0.28226345557043153, 'learning_rate': 0.00021930485556643703, 'batch_size': 128, 'n_epochs': 26}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 12:41:09,460] Trial 4 finished with value: 1.0 and parameters: {'embed_dim': 64, 'n_transformer_layers': 2, 'n_quantum_layers': 3, 'n_qubits': 4, 'dropout': 0.23204574812188042, 'learning_rate': 0.00017541893487450815, 'batch_size': 128, 'n_epochs': 15}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 12:45:02,921] Trial 5 finished with value: 1.0 and parameters: {'embed_dim': 96, 'n_transformer_layers': 3, 'n_quantum_layers': 3, 'n_qubits': 4, 'dropout': 0.26401308380298394, 'learning_rate': 0.00023426581058204064, 'batch_size': 32, 'n_epochs': 28}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 12:47:06,533] Trial 6 finished with value: 1.0 and parameters: {'embed_dim': 96, 'n_transformer_layers': 6, 'n_quantum_layers': 1, 'n_qubits': 4, 'dropout': 0.15879485872574356, 'learning_rate': 0.00012315571723666037, 'batch_size': 64, 'n_epochs': 27}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 12:48:06,730] Trial 7 finished with value: 1.0 and parameters: {'embed_dim': 64, 'n_transformer_layers': 3, 'n_quantum_layers': 3, 'n_qubits': 4, 'dropout': 0.1422772674924288, 'learning_rate': 0.0040215545266902904, 'batch_size': 64, 'n_epochs': 14}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 12:48:57,289] Trial 8 pruned. 
+[I 2025-11-24 12:49:21,942] Trial 9 finished with value: 1.0 and parameters: {'embed_dim': 96, 'n_transformer_layers': 3, 'n_quantum_layers': 1, 'n_qubits': 4, 'dropout': 0.19329469651469866, 'learning_rate': 0.0004470608546778491, 'batch_size': 128, 'n_epochs': 19}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 12:50:27,907] Trial 10 pruned. 
+[I 2025-11-24 12:52:07,160] Trial 11 finished with value: 1.0 and parameters: {'embed_dim': 32, 'n_transformer_layers': 5, 'n_quantum_layers': 4, 'n_qubits': 4, 'dropout': 0.3576779691245997, 'learning_rate': 0.0007584001479563494, 'batch_size': 128, 'n_epochs': 22}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 12:52:19,011] Trial 12 pruned. 
+[I 2025-11-24 12:53:45,455] Trial 13 finished with value: 1.0 and parameters: {'embed_dim': 48, 'n_transformer_layers': 5, 'n_quantum_layers': 4, 'n_qubits': 4, 'dropout': 0.3954237791754908, 'learning_rate': 0.0009168435760388632, 'batch_size': 128, 'n_epochs': 19}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 12:54:44,461] Trial 14 finished with value: 1.0 and parameters: {'embed_dim': 112, 'n_transformer_layers': 4, 'n_quantum_layers': 2, 'n_qubits': 4, 'dropout': 0.30229344795163393, 'learning_rate': 0.0018766870441105819, 'batch_size': 128, 'n_epochs': 24}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 13:00:30,389] Trial 15 finished with value: 1.0 and parameters: {'embed_dim': 64, 'n_transformer_layers': 6, 'n_quantum_layers': 4, 'n_qubits': 4, 'dropout': 0.23506836917789348, 'learning_rate': 0.009818247569037455, 'batch_size': 32, 'n_epochs': 17}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 13:00:38,007] Trial 16 pruned. 
+[I 2025-11-24 13:02:31,444] Trial 17 finished with value: 1.0 and parameters: {'embed_dim': 48, 'n_transformer_layers': 5, 'n_quantum_layers': 4, 'n_qubits': 4, 'dropout': 0.1046531145982682, 'learning_rate': 0.0003054188400065953, 'batch_size': 128, 'n_epochs': 25}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 13:07:05,476] Trial 18 finished with value: 1.0 and parameters: {'embed_dim': 80, 'n_transformer_layers': 4, 'n_quantum_layers': 4, 'n_qubits': 4, 'dropout': 0.2897186734489831, 'learning_rate': 0.0007037874972947771, 'batch_size': 32, 'n_epochs': 20}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 13:09:29,255] Trial 19 finished with value: 1.0 and parameters: {'embed_dim': 48, 'n_transformer_layers': 6, 'n_quantum_layers': 3, 'n_qubits': 4, 'dropout': 0.35057176270491625, 'learning_rate': 0.0001537976190717288, 'batch_size': 64, 'n_epochs': 17}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 13:09:43,222] Trial 20 finished with value: 1.0 and parameters: {'embed_dim': 112, 'n_transformer_layers': 2, 'n_quantum_layers': 2, 'n_qubits': 4, 'dropout': 0.208203759101667, 'learning_rate': 0.0005640177662774702, 'batch_size': 128, 'n_epochs': 11}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 13:09:56,963] Trial 21 pruned. 
+[I 2025-11-24 13:10:10,789] Trial 22 pruned. 
+[I 2025-11-24 13:10:20,238] Trial 23 pruned. 
+[I 2025-11-24 13:11:22,659] Trial 24 finished with value: 1.0 and parameters: {'embed_dim': 64, 'n_transformer_layers': 4, 'n_quantum_layers': 4, 'n_qubits': 4, 'dropout': 0.15640356321036158, 'learning_rate': 0.0014411338122813277, 'batch_size': 128, 'n_epochs': 17}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 13:11:44,602] Trial 25 finished with value: 1.0 and parameters: {'embed_dim': 80, 'n_transformer_layers': 3, 'n_quantum_layers': 2, 'n_qubits': 4, 'dropout': 0.32043340879657656, 'learning_rate': 0.00035182107867254227, 'batch_size': 128, 'n_epochs': 12}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 13:12:13,727] Trial 26 finished with value: 1.0 and parameters: {'embed_dim': 64, 'n_transformer_layers': 2, 'n_quantum_layers': 3, 'n_qubits': 4, 'dropout': 0.22512425610326553, 'learning_rate': 0.0005263674780287425, 'batch_size': 128, 'n_epochs': 19}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 13:13:21,965] Trial 27 finished with value: 1.0 and parameters: {'embed_dim': 96, 'n_transformer_layers': 3, 'n_quantum_layers': 4, 'n_qubits': 4, 'dropout': 0.2594125576915605, 'learning_rate': 0.0002032510283049333, 'batch_size': 128, 'n_epochs': 24}. Best is trial 0 with value: 1.0.
+[I 2025-11-24 13:13:56,381] Trial 28 pruned. 
+[I 2025-11-24 13:16:59,790] Trial 29 finished with value: 1.0 and parameters: {'embed_dim': 112, 'n_transformer_layers': 4, 'n_quantum_layers': 2, 'n_qubits': 4, 'dropout': 0.2741033615972338, 'learning_rate': 0.0002609758185362458, 'batch_size': 32, 'n_epochs': 21}. Best is trial 0 with value: 1.0.
+
+Best trial value: 1.0000
+Best params:
+  embed_dim: 64
+  n_transformer_layers: 6
+  n_quantum_layers: 3
+  n_qubits: 4
+  dropout: 0.279597545259111
+  learning_rate: 0.0002051338263087451
+  batch_size: 128
+  n_epochs: 22
+
+Best model state_dict saved from trial 0
+
+Best hyperparameters found:
+  embed_dim: 64
+  n_transformer_layers: 6
+  n_quantum_layers: 3
+  n_qubits: 4
+  dropout: 0.279597545259111
+  learning_rate: 0.0002051338263087451
+  batch_size: 128
+  n_epochs: 22
+
+======================================================================
+Step 4: Training Quantum Transformer with Best Hyperparameters
+======================================================================
+✓ Model created with 269,738 parameters
+🎮 GPU: NVIDIA GeForce RTX 5060 (Compute Capability: 12.0)
+
+⚠️  WARNING: GPU with compute capability 12.0 detected
+   This GPU architecture may not be supported by current PyTorch builds.
+   ⚠️  RTX 5060 or similar Blackwell architecture GPU detected (sm_120)
+   Official stable PyTorch releases don't support this GPU yet.
+
+   💡 RECOMMENDED SOLUTIONS:
+   1. Try PyTorch nightly build (may have sm_120 support):
+      pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126
+   2. Use CPU mode (automatic fallback - slower but works)
+   3. Wait for official PyTorch release with sm_120 support
+
+   Testing compatibility...
+
+❌ CUDA Kernel Compatibility Error
+   GPU: NVIDIA GeForce RTX 5060
+   Compute Capability: 12.0
+
+   🔍 DIAGNOSIS: RTX 5060 or newer GPU (sm_120+)
+   Current PyTorch build doesn't include kernels for this GPU architecture.
+
+   💡 SOLUTIONS (in order of recommendation):
+   1. Try PyTorch nightly build:
+      pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126
+      Then restart your script.
+   2. Use CPU mode (automatic - slower but works):
+      The trainer will automatically fall back to CPU.
+   3. Build PyTorch from source with sm_120 support (advanced)
+   4. Wait for official PyTorch release
+
+   ⚙️  Falling back to CPU mode...
+   ℹ️  Compilation disabled (CPU mode on Windows requires C++ compiler)
+✅ Using CPU (GPU unavailable or incompatible)
+✅ Model initialized on cpu (Compilation disabled)
+✅ Hardware detected: Device=cpu, CPUs=6
+
+📊 Training Configuration:
+  Dataset: TEST dataset (10,000 samples)
+  Epochs: 22
+  Batch size: 128
+  Learning rate: 0.000205
+  Label smoothing: 0.1 (for better generalization)
+  LR Scheduler: CosineAnnealingWarmRestarts (T_0=10, T_mult=2)
+
+--- Starting Quantum-Hybrid Training ---
+⚠️ Windows detected: Forced num_workers=0 (Multiprocessing disabled for stability)
+⚙️ DataLoader Config: workers=0, pin_memory=False
+Epoch 1/22: Train Loss: 0.9300 | Val Loss: 0.7458 | Val Acc: 0.0078 | LR: 0.000205
+Epoch 2/22: Train Loss: 0.8207 | Val Loss: 0.7331 | Val Acc: 0.0078 | LR: 0.000200
+Epoch 3/22: Train Loss: 0.7314 | Val Loss: 0.7140 | Val Acc: 0.0078 | LR: 0.000186
+Epoch 4/22: Train Loss: 0.6830 | Val Loss: 0.6444 | Val Acc: 0.9966 | LR: 0.000163
+Epoch 5/22: Train Loss: 0.6490 | Val Loss: 0.6011 | Val Acc: 0.9966 | LR: 0.000135
+Epoch 6/22: Train Loss: 0.6132 | Val Loss: 0.6195 | Val Acc: 0.9966 | LR: 0.000103
+Epoch 7/22: Train Loss: 0.5940 | Val Loss: 0.5792 | Val Acc: 0.9966 | LR: 0.000072
+Epoch 8/22: Train Loss: 0.5708 | Val Loss: 0.5776 | Val Acc: 0.9966 | LR: 0.000043
+Epoch 9/22: Train Loss: 0.5723 | Val Loss: 0.5683 | Val Acc: 0.9966 | LR: 0.000020
+Epoch 10/22: Train Loss: 0.5655 | Val Loss: 0.5858 | Val Acc: 0.9966 | LR: 0.000006
+Epoch 11/22: Train Loss: 0.5403 | Val Loss: 0.5588 | Val Acc: 0.9966 | LR: 0.000205
+Epoch 12/22: Train Loss: 0.5015 | Val Loss: 0.5449 | Val Acc: 0.9966 | LR: 0.000204
+Epoch 13/22: Train Loss: 0.4592 | Val Loss: 0.4648 | Val Acc: 0.9966 | LR: 0.000200
+Epoch 14/22: Train Loss: 0.4308 | Val Loss: 0.4610 | Val Acc: 1.0000 | LR: 0.000194
+Epoch 15/22: Train Loss: 0.4028 | Val Loss: 0.4332 | Val Acc: 1.0000 | LR: 0.000186
+Epoch 16/22: Train Loss: 0.3793 | Val Loss: 0.4011 | Val Acc: 0.9966 | LR: 0.000175
+Epoch 17/22: Train Loss: 0.3607 | Val Loss: 0.3674 | Val Acc: 0.9966 | LR: 0.000163
+Epoch 18/22: Train Loss: 0.3479 | Val Loss: 0.3654 | Val Acc: 1.0000 | LR: 0.000149
+Epoch 19/22: Train Loss: 0.3341 | Val Loss: 0.3178 | Val Acc: 1.0000 | LR: 0.000135
+Epoch 20/22: Train Loss: 0.3211 | Val Loss: 0.3153 | Val Acc: 1.0000 | LR: 0.000119
+Epoch 21/22: Train Loss: 0.3149 | Val Loss: 0.3118 | Val Acc: 1.0000 | LR: 0.000103
+Epoch 22/22: Train Loss: 0.3065 | Val Loss: 0.2809 | Val Acc: 1.0000 | LR: 0.000087
+✅ Training complete. Best model saved to models/best_model.pth
+
+======================================================================
+Step 5: Evaluating on Test Set
+======================================================================
+⚠️ Windows detected: Forced num_workers=0 (Multiprocessing disabled for stability)
+
+======================================================================
+Running Final Evaluation...
+======================================================================
+
+Test Results:
+  Accuracy:  0.9972
+  F1-Score:  0.9974
+  Precision: 0.9979
+  Recall:    0.9972
+
+Confusion Matrix:
+[[  14    0]
+ [   5 1765]]
+
+Detailed Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.7368    1.0000    0.8485        14
+           1     1.0000    0.9972    0.9986      1770
+
+    accuracy                         0.9972      1784
+   macro avg     0.8684    0.9986    0.9235      1784
+weighted avg     0.9979    0.9972    0.9974      1784
+
+📊 Training history plot saved to results/training_history.png
+
+======================================================================
+Training Complete!
+======================================================================
+Best model saved to: models/best_model.pth
+Results saved to: results/
+
+✅ Log file saved to: results\training_log_20251124_123711.txt
+
+======================================================================
+Training Log Ended: 2025-11-24 13:18:47
+Exit Status: SUCCESS
+======================================================================

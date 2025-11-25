@@ -1,0 +1,39 @@
+
+======================================================================
+Training Log Started: 2025-11-24 16:54:46
+Log File: results\training_log_20251124_165446.txt
+======================================================================
+
+📝 All output will be logged to: results\training_log_20251124_165446.txt
+======================================================================
+
+======================================================================
+Quantum Machine Learning: Transformer + AutoML
+Dataset: 5G-NIDD
+======================================================================
+
+======================================================================
+GPU Availability Check
+======================================================================
+✓ GPU Available: NVIDIA GeForce RTX 5060
+  GPU Memory: 8.55 GB
+  CUDA Version: 12.6
+  PyTorch Version: 2.9.1+cu126
+  ✓ GPU Test: Successfully created tensor on cuda:0
+
+🚀 GPU Ready: cuda:0
+Note: Classical layers will use GPU, quantum circuits run on CPU
+
+======================================================================
+SECTION 1: Testing Data Loader
+======================================================================
+
+======================================================================
+Training Log Ended: 2025-11-24 16:54:47
+Exit Status: ERROR - TypeError: unsupported format string passed to NoneType.__format__
+======================================================================
+compatible with the current PyTorch installation.
+The current PyTorch install supports CUDA capabilities sm_50 sm_60 sm_61 sm_70 sm_75 sm_80 sm_86 sm_90.
+If you want to use the NVIDIA GeForce RTX 5060 GPU with PyTorch, please check the instructions at https://pytorch.org/get-started/locally/
+
+  warnings.warn(
