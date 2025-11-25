@@ -112,10 +112,11 @@ def _run_training():
     preprocessor = DataPreprocessor()
     
     # For amplitude encoding, features must be 2^n (power of 2)
-    # Using 4 qubits = 2^4 = 16 features for amplitude encoding
-    n_qubits_for_amplitude = 4
-    n_features = min(2**n_qubits_for_amplitude, X_train.shape[1])  # 2^4 = 16 features
-    print(f"Reducing to {n_features} features (2^{n_qubits_for_amplitude} for amplitude encoding with {n_qubits_for_amplitude} qubits)...")
+    # Using 5 qubits = 2^5 = 32 features for amplitude encoding
+    n_qubits_for_amplitude = 5
+    n_features = 2**n_qubits_for_amplitude  # 2^5 = 32 features (PCA will expand if needed)
+    print(f"Target: {n_features} features (2^{n_qubits_for_amplitude} for amplitude encoding with {n_qubits_for_amplitude} qubits)...")
+    print(f"  Current features: {X_train.shape[1]}, Target: {n_features}")
     
     X_train, X_val, X_test = preprocessor.preprocess_features(
         X_train, X_val, X_test, n_features=n_features, y_train=y_train

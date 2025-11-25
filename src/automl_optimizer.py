@@ -184,7 +184,7 @@ class AutoMLOptimizer:
                 'embed_dim': trial.suggest_int('embed_dim', 32, 128, step=16),  # Moderate range
                 'n_transformer_layers': trial.suggest_int('n_transformer_layers', 2, 6),  # Moderate depth
                 'n_quantum_layers': trial.suggest_int('n_quantum_layers', 1, 4),  # Moderate quantum depth
-                'n_qubits': trial.suggest_categorical('n_qubits', [4]),  # Fixed to 4 qubits for amplitude encoding (2^4=16 features)
+                'n_qubits': trial.suggest_categorical('n_qubits', [5]),  # Fixed to 5 qubits for amplitude encoding (2^5=32 features)
                 'dropout': trial.suggest_float('dropout', 0.1, 0.4),
                 # FIX: suggest_loguniform is deprecated, use suggest_float with log=True
                 'learning_rate': trial.suggest_float('learning_rate', 1e-4, 1e-2, log=True),

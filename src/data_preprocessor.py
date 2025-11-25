@@ -27,13 +27,15 @@ class DataPreprocessor:
     
     def preprocess_and_reduce(self, X_train, X_val, X_test, target_qubits=None, y_train=None, method='pca'):
         """
-        Standardize and reduce dimensions to match the number of available qubits.
+        Standardize and adjust dimensions to match the number of available qubits.
+        Can both reduce (if target < current) or expand (if target > current) dimensions.
         
         Args:
             X_train, X_val, X_test: Training, validation, and test features
-            target_qubits: Target number of features (qubits) after reduction
+            target_qubits: Target number of features (qubits) after adjustment
             y_train: Training labels (required for 'select_k_best' method)
-            method: 'pca' or 'select_k_best' for dimensionality reduction
+            method: 'pca' or 'select_k_best' for dimensionality adjustment
+                   Note: Expansion only uses PCA (requires sufficient samples)
         
         Returns:
             Tuple of (X_train_scaled, X_val_scaled, X_test_scaled)
@@ -53,26 +55,48 @@ class DataPreprocessor:
         X_val_std = self._clean_data(X_val_std)
         X_test_std = self._clean_data(X_test_std)
         
-        # 4. Dimensionality Reduction (Fit to Qubits)
-        if target_qubits and target_qubits < X_train_std.shape[1]:
-            original_dim = X_train_std.shape[1]  # Store original dimension before reduction
-            print(f"Reducing dimensions from {original_dim} to {target_qubits} using {method}...")
+        # 4. Dimensionality Adjustment (Fit to Qubits)
+        # Handle both reduction and expansion to match target_qubits
+        if target_qubits and target_qubits != X_train_std.shape[1]:
+            original_dim = X_train_std.shape[1]  # Store original dimension
             
-            if method == 'pca':
+            if target_qubits < X_train_std.shape[1]:
+                # REDUCTION: Reduce dimensions
+                print(f"Reducing dimensions from {original_dim} to {target_qubits} using {method}...")
+                
+                if method == 'pca':
+                    self.pca = PCA(n_components=target_qubits)
+                    X_train_std = self.pca.fit_transform(X_train_std)
+                    X_val_std = self.pca.transform(X_val_std)
+                    X_test_std = self.pca.transform(X_test_std)
+                    print(f"PCA explained variance ratio: {self.pca.explained_variance_ratio_.sum():.4f}")
+                    
+                elif method == 'select_k_best' and y_train is not None:
+                    self.feature_selector = SelectKBest(f_classif, k=target_qubits)
+                    X_train_std = self.feature_selector.fit_transform(X_train_std, y_train)
+                    X_val_std = self.feature_selector.transform(X_val_std)
+                    X_test_std = self.feature_selector.transform(X_test_std)
+                    print(f"Selected {target_qubits} best features from {original_dim} original features")
+                else:
+                    raise ValueError("For 'select_k_best' method, y_train must be provided")
+            
+            elif target_qubits > X_train_std.shape[1]:
+                # EXPANSION: Expand dimensions using PCA
+                # PCA can create up to min(n_samples, n_features) components
+                max_components = min(X_train_std.shape[0], X_train_std.shape[1])
+                if target_qubits > max_components:
+                    raise ValueError(
+                        f"Cannot create {target_qubits} components from {X_train_std.shape[1]} features "
+                        f"with {X_train_std.shape[0]} samples. Maximum possible: {max_components}. "
+                        f"Please ensure you have at least {target_qubits} samples."
+                    )
+                print(f"Expanding dimensions from {original_dim} to {target_qubits} using PCA...")
                 self.pca = PCA(n_components=target_qubits)
                 X_train_std = self.pca.fit_transform(X_train_std)
                 X_val_std = self.pca.transform(X_val_std)
                 X_test_std = self.pca.transform(X_test_std)
                 print(f"PCA explained variance ratio: {self.pca.explained_variance_ratio_.sum():.4f}")
-                
-            elif method == 'select_k_best' and y_train is not None:
-                self.feature_selector = SelectKBest(f_classif, k=target_qubits)
-                X_train_std = self.feature_selector.fit_transform(X_train_std, y_train)
-                X_val_std = self.feature_selector.transform(X_val_std)
-                X_test_std = self.feature_selector.transform(X_test_std)
-                print(f"Selected {target_qubits} best features from {original_dim} original features")
-            else:
-                raise ValueError("For 'select_k_best' method, y_train must be provided")
+                print(f"✓ Successfully expanded to {target_qubits} features for amplitude encoding")
         
         # 5. Fit Quantum Scaler (0 to PI) on the reduced/standardized data
         # We fit this here so we can reuse it later in get_quantum_features()

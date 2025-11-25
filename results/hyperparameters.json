@@ -3,14 +3,14 @@
     "embed_dim": 96,
     "n_transformer_layers": 5,
     "n_quantum_layers": 3,
-    "n_qubits": 4,
+    "n_qubits": 5,
     "dropout": 0.2,
     "learning_rate": 0.0005,
     "batch_size": 128,
     "n_epochs": 25
   },
-  "input_dim": 16,
+  "input_dim": 32,
   "n_classes": 2,
-  "n_features": 16,
-  "n_qubits_for_amplitude": 4
+  "n_features": 32,
+  "n_qubits_for_amplitude": 5
 }
