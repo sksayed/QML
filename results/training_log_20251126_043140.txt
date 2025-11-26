@@ -1,0 +1,205 @@
+
+======================================================================
+Training Log Started: 2025-11-26 04:31:40
+Log File: results\training_log_20251126_043140.txt
+======================================================================
+
+📝 All output will be logged to: results\training_log_20251126_043140.txt
+======================================================================
+
+======================================================================
+Quantum Machine Learning: Transformer + AutoML
+Dataset: 5G-NIDD
+======================================================================
+
+======================================================================
+GPU Availability Check
+======================================================================
+✓ GPU Available: NVIDIA GeForce RTX 5060
+  GPU Memory: 8.55 GB
+  CUDA Version: 12.6
+  PyTorch Version: 2.9.1+cu126
+  ✓ GPU Test: Successfully created tensor on cuda:0
+
+🚀 GPU Ready: cuda:0
+Note: Classical layers will use GPU, quantum circuits run on CPU
+
+======================================================================
+SECTION 1: Testing Data Loader
+======================================================================
+Loading data from data/data.csv...
+Dataset shape: (1215890, 52)
+Columns (52): ['Unnamed: 0', 'Seq', 'Dur', 'RunTime', 'Mean', 'Sum', 'Min', 'Max', 'Proto', 'sTos']...
+✓ Data loaded: (1215890, 52)
+Target Column detected: 'Label'
+Dropping sparse column: Proto (>50% NaN)
+Dropping sparse column: dTos (>50% NaN)
+Dropping sparse column: sDSb (>50% NaN)
+Dropping sparse column: dDSb (>50% NaN)
+Dropping sparse column: dTtl (>50% NaN)
+Dropping sparse column: dHops (>50% NaN)
+Dropping sparse column: Cause (>50% NaN)
+Dropping sparse column: SrcGap (>50% NaN)
+Dropping sparse column: DstGap (>50% NaN)
+Dropping sparse column: State (>50% NaN)
+Dropping sparse column: SrcWin (>50% NaN)
+Dropping sparse column: DstWin (>50% NaN)
+Dropping sparse column: sVid (>50% NaN)
+Dropping sparse column: dVid (>50% NaN)
+Dropping sparse column: SrcTCPBase (>50% NaN)
+Dropping sparse column: DstTCPBase (>50% NaN)
+Dropping 214 rows with NaN features (0.02%)
+Final Features shape: (1215676, 31)
+Final Labels shape: (1215676,)
+Selected 31 feature columns
+Unique labels (2): ['Benign' 'Malicious']
+✓ Features extracted: X=(1215676, 31), y=(1215676,)
+Data split - Train: (850972, 31), Val: (121568, 31), Test: (243136, 31)
+✓ Data split complete
+  Train: (850972, 31), Val: (121568, 31), Test: (243136, 31)
+
+======================================================================
+SECTION 2: Testing Data Preprocessor
+======================================================================
+Reducing to 16 features (2^4 for amplitude encoding with 4 qubits)...
+Reducing dimensions from 31 to 16 using select_k_best...
+Selected 16 best features from 31 original features
+✓ Features preprocessed: (850972, 16)
+Classes: ['Benign' 'Malicious']
+Label mapping: {'Benign': 0, 'Malicious': 1}
+✓ Labels encoded
+Input dimension: 16
+Number of classes: 2
+Train set: (850972, 16)
+Val set: (121568, 16)
+Test set: (243136, 16)
+
+======================================================================
+Step 3: Hyperparameter Configuration
+======================================================================
+✓ Found hyperparameters file: results/hyperparameters.json
+  Loading hyperparameters from file (skipping AutoML)...
+✓ Hyperparameters loaded successfully
+
+Loaded hyperparameters:
+  embed_dim: 96
+  n_transformer_layers: 5
+  n_quantum_layers: 3
+  n_qubits: 4
+  dropout: 0.2
+  learning_rate: 0.0005
+  batch_size: 128
+  n_epochs: 25
+
+======================================================================
+Step 4: Training Quantum Transformer with Best Hyperparameters
+======================================================================
+✓ Model created with 495,118 parameters
+🎮 GPU: NVIDIA GeForce RTX 5060 (Compute Capability: 12.0)
+
+⚠️  WARNING: GPU with compute capability 12.0 detected
+   This GPU architecture may not be supported by current PyTorch builds.
+   ⚠️  RTX 5060 or similar Blackwell architecture GPU detected (sm_120)
+   Official stable PyTorch releases don't support this GPU yet.
+
+   💡 RECOMMENDED SOLUTIONS:
+   1. Try PyTorch nightly build (may have sm_120 support):
+      pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126
+   2. Use CPU mode (automatic fallback - slower but works)
+   3. Wait for official PyTorch release with sm_120 support
+
+   Testing compatibility...
+
+❌ CUDA Kernel Compatibility Error
+   GPU: NVIDIA GeForce RTX 5060
+   Compute Capability: 12.0
+
+   🔍 DIAGNOSIS: RTX 5060 or newer GPU (sm_120+)
+   Current PyTorch build doesn't include kernels for this GPU architecture.
+
+   💡 SOLUTIONS (in order of recommendation):
+   1. Try PyTorch nightly build:
+      pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126
+      Then restart your script.
+   2. Use CPU mode (automatic - slower but works):
+      The trainer will automatically fall back to CPU.
+   3. Build PyTorch from source with sm_120 support (advanced)
+   4. Wait for official PyTorch release
+
+   ⚙️  Falling back to CPU mode...
+   ℹ️  Compilation disabled (CPU mode on Windows requires C++ compiler)
+✅ Using CPU (GPU unavailable or incompatible)
+✅ Model initialized on cpu (Compilation disabled)
+✅ Hardware detected: Device=cpu, CPUs=6
+
+📊 Training Configuration:
+  Epochs: 25
+  Batch size: 128
+  Learning rate: 0.000500
+  Label smoothing: 0.1 (for better generalization)
+  LR Scheduler: CosineAnnealingWarmRestarts (T_0=10, T_mult=2)
+
+--- Starting Quantum-Hybrid Training ---
+⚠️ Windows detected: Forced num_workers=0 (Multiprocessing disabled for stability)
+⚙️ DataLoader Config: workers=0, pin_memory=False
+Epoch 1/25: Train Loss: 0.2847 | Val Loss: 0.2791 | Val Acc: 0.9292 | LR: 0.000500
+Epoch 2/25: Train Loss: 0.2735 | Val Loss: 0.2707 | Val Acc: 0.9441 | LR: 0.000488
+Epoch 3/25: Train Loss: 0.2704 | Val Loss: 0.2654 | Val Acc: 0.9394 | LR: 0.000452
+Epoch 4/25: Train Loss: 0.2684 | Val Loss: 0.2635 | Val Acc: 0.9451 | LR: 0.000397
+Epoch 5/25: Train Loss: 0.2665 | Val Loss: 0.2601 | Val Acc: 0.9535 | LR: 0.000328
+Epoch 6/25: Train Loss: 0.2639 | Val Loss: 0.2629 | Val Acc: 0.9467 | LR: 0.000251
+Epoch 7/25: Train Loss: 0.2608 | Val Loss: 0.2518 | Val Acc: 0.9548 | LR: 0.000173
+Epoch 8/25: Train Loss: 0.2580 | Val Loss: 0.2510 | Val Acc: 0.9544 | LR: 0.000104
+Epoch 9/25: Train Loss: 0.2557 | Val Loss: 0.2558 | Val Acc: 0.9514 | LR: 0.000049
+Epoch 10/25: Train Loss: 0.2540 | Val Loss: 0.2501 | Val Acc: 0.9557 | LR: 0.000013
+Epoch 11/25: Train Loss: 0.2671 | Val Loss: 0.2623 | Val Acc: 0.9424 | LR: 0.000500
+Epoch 12/25: Train Loss: 0.2662 | Val Loss: 0.2631 | Val Acc: 0.9404 | LR: 0.000497
+Epoch 13/25: Train Loss: 0.2653 | Val Loss: 0.2634 | Val Acc: 0.9493 | LR: 0.000488
+Epoch 14/25: Train Loss: 0.2640 | Val Loss: 0.2616 | Val Acc: 0.9474 | LR: 0.000473
+Epoch 15/25: Train Loss: 0.2629 | Val Loss: 0.2586 | Val Acc: 0.9492 | LR: 0.000452
+⏹️ Early stopping at epoch 15 (no improvement for 5 epochs)
+✅ Training complete. Best model saved to models/best_model.pth
+
+======================================================================
+Step 5: Evaluating on Test Set
+======================================================================
+⚠️ Windows detected: Forced num_workers=0 (Multiprocessing disabled for stability)
+
+======================================================================
+Running Final Evaluation...
+======================================================================
+
+Test Results:
+  Accuracy:  0.9502
+  F1-Score:  0.9499
+  Precision: 0.9505
+  Recall:    0.9502
+
+Confusion Matrix:
+[[ 86992   8513]
+ [  3606 144025]]
+
+Detailed Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.9602    0.9109    0.9349     95505
+           1     0.9442    0.9756    0.9596    147631
+
+    accuracy                         0.9502    243136
+   macro avg     0.9522    0.9432    0.9473    243136
+weighted avg     0.9505    0.9502    0.9499    243136
+
+📊 Training history plot saved to results/training_history.png
+
+======================================================================
+Training Complete!
+======================================================================
+Best model saved to: models/best_model.pth
+Results saved to: results/
+
+✅ Log file saved to: results\training_log_20251126_043140.txt
+
+======================================================================
+Training Log Ended: 2025-11-26 06:43:32
+Exit Status: SUCCESS
+======================================================================

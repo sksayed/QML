@@ -1,0 +1,433 @@
+
+======================================================================
+Training Log Started: 2025-11-24 04:49:17
+Log File: results\training_log_20251124_044917.txt
+======================================================================
+
+📝 All output will be logged to: results\training_log_20251124_044917.txt
+======================================================================
+
+======================================================================
+Quantum Machine Learning: Transformer + AutoML
+Dataset: 5G-NIDD
+======================================================================
+
+======================================================================
+GPU Availability Check
+======================================================================
+✓ GPU Available: NVIDIA GeForce RTX 5060
+  GPU Memory: 8.55 GB
+  CUDA Version: 12.6
+  PyTorch Version: 2.9.1+cu126
+  ✓ GPU Test: Successfully created tensor on cuda:0
+
+🚀 GPU Ready: cuda:0
+Note: Classical layers will use GPU, quantum circuits run on CPU
+
+======================================================================
+SECTION 1: Testing Data Loader
+======================================================================
+📊 Using FULL dataset (all available data) for training
+Loading data from data/data.csv...
+Dataset shape: (1215890, 52)
+Columns (52): ['Unnamed: 0', 'Seq', 'Dur', 'RunTime', 'Mean', 'Sum', 'Min', 'Max', 'Proto', 'sTos']...
+✓ Data loaded: (1215890, 52)
+Target Column detected: 'Label'
+Dropping sparse column: Proto (>50% NaN)
+Dropping sparse column: dTos (>50% NaN)
+Dropping sparse column: sDSb (>50% NaN)
+Dropping sparse column: dDSb (>50% NaN)
+Dropping sparse column: dTtl (>50% NaN)
+Dropping sparse column: dHops (>50% NaN)
+Dropping sparse column: Cause (>50% NaN)
+Dropping sparse column: SrcGap (>50% NaN)
+Dropping sparse column: DstGap (>50% NaN)
+Dropping sparse column: State (>50% NaN)
+Dropping sparse column: SrcWin (>50% NaN)
+Dropping sparse column: DstWin (>50% NaN)
+Dropping sparse column: sVid (>50% NaN)
+Dropping sparse column: dVid (>50% NaN)
+Dropping sparse column: SrcTCPBase (>50% NaN)
+Dropping sparse column: DstTCPBase (>50% NaN)
+Dropping 214 rows with NaN features (0.02%)
+Final Features shape: (1215676, 31)
+Final Labels shape: (1215676,)
+Selected 31 feature columns
+Unique labels (2): ['Benign' 'Malicious']
+✓ Features extracted: X=(1215676, 31), y=(1215676,)
+Data split - Train: (850972, 31), Val: (121568, 31), Test: (243136, 31)
+✓ Data split complete
+  Train: (850972, 31), Val: (121568, 31), Test: (243136, 31)
+
+======================================================================
+SECTION 2: Testing Data Preprocessor
+======================================================================
+Reducing to 6 features (to match n_qubits=6)...
+Reducing dimensions from 31 to 6 using select_k_best...
+Selected 6 best features from 31 original features
+✓ Features preprocessed: (850972, 6)
+Classes: ['Benign' 'Malicious']
+Label mapping: {'Benign': 0, 'Malicious': 1}
+✓ Labels encoded
+Input dimension: 6
+Number of classes: 2
+Train set: (850972, 6)
+Val set: (121568, 6)
+Test set: (243136, 6)
+
+======================================================================
+SECTION 7: Full Pipeline
+======================================================================
+
+======================================================================
+Step 3: AutoML Hyperparameter Optimization
+======================================================================
+Using device: cuda:0
+Training on FULL dataset (all available data)
+Starting Optuna optimization on cuda:0 with 30 trials...
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:27,637] Trial 0 finished with value: 0.0 and parameters: {'embed_dim': 64, 'n_transformer_layers': 6, 'n_quantum_layers': 3, 'n_qubits': 6, 'dropout': 0.279597545259111, 'learning_rate': 0.0002051338263087451, 'batch_size': 128, 'n_epochs': 22}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:27,669] Trial 1 finished with value: 0.0 and parameters: {'embed_dim': 96, 'n_transformer_layers': 2, 'n_quantum_layers': 4, 'n_qubits': 6, 'dropout': 0.34973279224012654, 'learning_rate': 0.00026587543983272726, 'batch_size': 128, 'n_epochs': 21}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:27,705] Trial 2 finished with value: 0.0 and parameters: {'embed_dim': 80, 'n_transformer_layers': 3, 'n_quantum_layers': 3, 'n_qubits': 6, 'dropout': 0.14184815819561256, 'learning_rate': 0.0003839629299804173, 'batch_size': 128, 'n_epochs': 14}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:27,740] Trial 3 finished with value: 0.0 and parameters: {'embed_dim': 80, 'n_transformer_layers': 4, 'n_quantum_layers': 1, 'n_qubits': 6, 'dropout': 0.28226345557043153, 'learning_rate': 0.00021930485556643703, 'batch_size': 128, 'n_epochs': 26}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:27,771] Trial 4 finished with value: 0.0 and parameters: {'embed_dim': 64, 'n_transformer_layers': 2, 'n_quantum_layers': 3, 'n_qubits': 6, 'dropout': 0.23204574812188042, 'learning_rate': 0.00017541893487450815, 'batch_size': 128, 'n_epochs': 15}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:27,803] Trial 5 finished with value: 0.0 and parameters: {'embed_dim': 96, 'n_transformer_layers': 3, 'n_quantum_layers': 3, 'n_qubits': 6, 'dropout': 0.26401308380298394, 'learning_rate': 0.00023426581058204064, 'batch_size': 32, 'n_epochs': 28}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:27,839] Trial 6 finished with value: 0.0 and parameters: {'embed_dim': 96, 'n_transformer_layers': 6, 'n_quantum_layers': 1, 'n_qubits': 6, 'dropout': 0.15879485872574356, 'learning_rate': 0.00012315571723666037, 'batch_size': 64, 'n_epochs': 27}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:27,869] Trial 7 finished with value: 0.0 and parameters: {'embed_dim': 64, 'n_transformer_layers': 3, 'n_quantum_layers': 3, 'n_qubits': 6, 'dropout': 0.1422772674924288, 'learning_rate': 0.0040215545266902904, 'batch_size': 64, 'n_epochs': 14}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:27,904] Trial 8 finished with value: 0.0 and parameters: {'embed_dim': 32, 'n_transformer_layers': 6, 'n_quantum_layers': 3, 'n_qubits': 6, 'dropout': 0.3187021504122962, 'learning_rate': 0.0034877126245459306, 'batch_size': 64, 'n_epochs': 28}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:27,935] Trial 9 finished with value: 0.0 and parameters: {'embed_dim': 96, 'n_transformer_layers': 3, 'n_quantum_layers': 1, 'n_qubits': 6, 'dropout': 0.19329469651469866, 'learning_rate': 0.0004470608546778491, 'batch_size': 128, 'n_epochs': 19}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:27,981] Trial 10 finished with value: 0.0 and parameters: {'embed_dim': 128, 'n_transformer_layers': 5, 'n_quantum_layers': 2, 'n_qubits': 6, 'dropout': 0.37968710257353616, 'learning_rate': 0.001103265464618734, 'batch_size': 32, 'n_epochs': 10}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,020] Trial 11 finished with value: 0.0 and parameters: {'embed_dim': 32, 'n_transformer_layers': 5, 'n_quantum_layers': 4, 'n_qubits': 6, 'dropout': 0.3576779691245997, 'learning_rate': 0.0007584001479563494, 'batch_size': 128, 'n_epochs': 22}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,057] Trial 12 finished with value: 0.0 and parameters: {'embed_dim': 128, 'n_transformer_layers': 2, 'n_quantum_layers': 4, 'n_qubits': 6, 'dropout': 0.3260684568050581, 'learning_rate': 0.00010336923916326584, 'batch_size': 128, 'n_epochs': 22}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,094] Trial 13 finished with value: 0.0 and parameters: {'embed_dim': 48, 'n_transformer_layers': 5, 'n_quantum_layers': 4, 'n_qubits': 6, 'dropout': 0.3954237791754908, 'learning_rate': 0.0009168435760388632, 'batch_size': 128, 'n_epochs': 19}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,137] Trial 14 finished with value: 0.0 and parameters: {'embed_dim': 112, 'n_transformer_layers': 4, 'n_quantum_layers': 2, 'n_qubits': 6, 'dropout': 0.30229344795163393, 'learning_rate': 0.0018766870441105819, 'batch_size': 128, 'n_epochs': 24}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,178] Trial 15 finished with value: 0.0 and parameters: {'embed_dim': 64, 'n_transformer_layers': 6, 'n_quantum_layers': 4, 'n_qubits': 6, 'dropout': 0.23506836917789348, 'learning_rate': 0.009818247569037455, 'batch_size': 32, 'n_epochs': 17}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,216] Trial 16 finished with value: 0.0 and parameters: {'embed_dim': 112, 'n_transformer_layers': 2, 'n_quantum_layers': 2, 'n_qubits': 6, 'dropout': 0.3476903807204564, 'learning_rate': 0.00041267148394755443, 'batch_size': 128, 'n_epochs': 23}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,255] Trial 17 finished with value: 0.0 and parameters: {'embed_dim': 48, 'n_transformer_layers': 5, 'n_quantum_layers': 4, 'n_qubits': 6, 'dropout': 0.1046531145982682, 'learning_rate': 0.0003054188400065953, 'batch_size': 128, 'n_epochs': 25}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,291] Trial 18 finished with value: 0.0 and parameters: {'embed_dim': 80, 'n_transformer_layers': 4, 'n_quantum_layers': 4, 'n_qubits': 6, 'dropout': 0.2897186734489831, 'learning_rate': 0.0007037874972947771, 'batch_size': 32, 'n_epochs': 20}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,334] Trial 19 finished with value: 0.0 and parameters: {'embed_dim': 48, 'n_transformer_layers': 6, 'n_quantum_layers': 3, 'n_qubits': 6, 'dropout': 0.35057176270491625, 'learning_rate': 0.0001537976190717288, 'batch_size': 64, 'n_epochs': 17}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,370] Trial 20 finished with value: 0.0 and parameters: {'embed_dim': 112, 'n_transformer_layers': 2, 'n_quantum_layers': 2, 'n_qubits': 6, 'dropout': 0.208203759101667, 'learning_rate': 0.0005640177662774702, 'batch_size': 128, 'n_epochs': 11}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,407] Trial 21 finished with value: 0.0 and parameters: {'embed_dim': 80, 'n_transformer_layers': 3, 'n_quantum_layers': 3, 'n_qubits': 6, 'dropout': 0.2625876803944885, 'learning_rate': 0.0003350284722822971, 'batch_size': 128, 'n_epochs': 14}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,443] Trial 22 finished with value: 0.0 and parameters: {'embed_dim': 80, 'n_transformer_layers': 3, 'n_quantum_layers': 3, 'n_qubits': 6, 'dropout': 0.18429766412142284, 'learning_rate': 0.0002580715495443925, 'batch_size': 128, 'n_epochs': 30}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,481] Trial 23 finished with value: 0.0 and parameters: {'embed_dim': 96, 'n_transformer_layers': 2, 'n_quantum_layers': 3, 'n_qubits': 6, 'dropout': 0.10450636348770626, 'learning_rate': 0.00017023652505918272, 'batch_size': 128, 'n_epochs': 21}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,520] Trial 24 finished with value: 0.0 and parameters: {'embed_dim': 64, 'n_transformer_layers': 4, 'n_quantum_layers': 4, 'n_qubits': 6, 'dropout': 0.15640356321036158, 'learning_rate': 0.0014411338122813277, 'batch_size': 128, 'n_epochs': 17}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,556] Trial 25 finished with value: 0.0 and parameters: {'embed_dim': 80, 'n_transformer_layers': 3, 'n_quantum_layers': 2, 'n_qubits': 6, 'dropout': 0.32043340879657656, 'learning_rate': 0.00035182107867254227, 'batch_size': 128, 'n_epochs': 12}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,589] Trial 26 finished with value: 0.0 and parameters: {'embed_dim': 64, 'n_transformer_layers': 2, 'n_quantum_layers': 3, 'n_qubits': 6, 'dropout': 0.22512425610326553, 'learning_rate': 0.0005263674780287425, 'batch_size': 128, 'n_epochs': 19}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,639] Trial 27 finished with value: 0.0 and parameters: {'embed_dim': 96, 'n_transformer_layers': 3, 'n_quantum_layers': 4, 'n_qubits': 6, 'dropout': 0.2594125576915605, 'learning_rate': 0.0002032510283049333, 'batch_size': 128, 'n_epochs': 24}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,677] Trial 28 finished with value: 0.0 and parameters: {'embed_dim': 80, 'n_transformer_layers': 4, 'n_quantum_layers': 3, 'n_qubits': 6, 'dropout': 0.36980499749328544, 'learning_rate': 0.00013668924277241746, 'batch_size': 64, 'n_epochs': 16}. Best is trial 0 with value: 0.0.
+[Trial Failed] Error: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+[I 2025-11-24 04:49:28,717] Trial 29 finished with value: 0.0 and parameters: {'embed_dim': 112, 'n_transformer_layers': 4, 'n_quantum_layers': 2, 'n_qubits': 6, 'dropout': 0.2741033615972338, 'learning_rate': 0.0002609758185362458, 'batch_size': 32, 'n_epochs': 21}. Best is trial 0 with value: 0.0.
+
+Best trial value: 0.0000
+Best params:
+  embed_dim: 64
+  n_transformer_layers: 6
+  n_quantum_layers: 3
+  n_qubits: 6
+  dropout: 0.279597545259111
+  learning_rate: 0.0002051338263087451
+  batch_size: 128
+  n_epochs: 22
+
+Warning: No best model state_dict was saved.
+
+Best hyperparameters found:
+  embed_dim: 64
+  n_transformer_layers: 6
+  n_quantum_layers: 3
+  n_qubits: 6
+  dropout: 0.279597545259111
+  learning_rate: 0.0002051338263087451
+  batch_size: 128
+  n_epochs: 22
+
+======================================================================
+Step 4: Training Quantum Transformer with Best Hyperparameters
+======================================================================
+✓ Model created with 267,646 parameters
+🎮 GPU: NVIDIA GeForce RTX 5060 (Compute Capability: 12.0)
+
+⚠️  WARNING: GPU with compute capability 12.0 detected
+   This GPU architecture may not be supported by current PyTorch builds.
+   ⚠️  RTX 5060 or similar Blackwell architecture GPU detected (sm_120)
+   Official stable PyTorch releases don't support this GPU yet.
+
+   💡 RECOMMENDED SOLUTIONS:
+   1. Try PyTorch nightly build (may have sm_120 support):
+      pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126
+   2. Use CPU mode (automatic fallback - slower but works)
+   3. Wait for official PyTorch release with sm_120 support
+
+   Testing compatibility...
+
+❌ CUDA Kernel Compatibility Error
+   GPU: NVIDIA GeForce RTX 5060
+   Compute Capability: 12.0
+
+   🔍 DIAGNOSIS: RTX 5060 or newer GPU (sm_120+)
+   Current PyTorch build doesn't include kernels for this GPU architecture.
+
+   💡 SOLUTIONS (in order of recommendation):
+   1. Try PyTorch nightly build:
+      pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126
+      Then restart your script.
+   2. Use CPU mode (automatic - slower but works):
+      The trainer will automatically fall back to CPU.
+   3. Build PyTorch from source with sm_120 support (advanced)
+   4. Wait for official PyTorch release
+
+   ⚙️  Falling back to CPU mode...
+   ℹ️  Compilation disabled (CPU mode on Windows requires C++ compiler)
+✅ Using CPU (GPU unavailable or incompatible)
+✅ Model initialized on cpu (Compilation disabled)
+✅ Hardware detected: Device=cpu, CPUs=6
+
+📊 Training Configuration:
+  Dataset: FULL dataset (all available data)
+  Epochs: 22
+  Batch size: 128
+  Learning rate: 0.000205
+  Label smoothing: 0.1 (for better generalization)
+  LR Scheduler: CosineAnnealingWarmRestarts (T_0=10, T_mult=2)
+
+--- Starting Quantum-Hybrid Training ---
+⚠️ Windows detected: Forced num_workers=0 (Multiprocessing disabled for stability)
+⚙️ DataLoader Config: workers=0, pin_memory=False
+Epoch 1/22: Train Loss: 0.3070 | Val Loss: 0.2852 | Val Acc: 0.9151 | LR: 0.000205
+Epoch 2/22: Train Loss: 0.2963 | Val Loss: 0.2853 | Val Acc: 0.9153 | LR: 0.000200
+Epoch 3/22: Train Loss: 0.2948 | Val Loss: 0.2852 | Val Acc: 0.9160 | LR: 0.000186
+Epoch 4/22: Train Loss: 0.2939 | Val Loss: 0.2935 | Val Acc: 0.9126 | LR: 0.000163
+Epoch 5/22: Train Loss: 0.2932 | Val Loss: 0.2846 | Val Acc: 0.9161 | LR: 0.000135
+Epoch 6/22: Train Loss: 0.2923 | Val Loss: 0.2855 | Val Acc: 0.9159 | LR: 0.000103
+Epoch 7/22: Train Loss: 0.2917 | Val Loss: 0.2843 | Val Acc: 0.9152 | LR: 0.000072
+Epoch 8/22: Train Loss: 0.2911 | Val Loss: 0.2838 | Val Acc: 0.9154 | LR: 0.000043
+Epoch 9/22: Train Loss: 0.2908 | Val Loss: 0.2833 | Val Acc: 0.9163 | LR: 0.000020
+Epoch 10/22: Train Loss: 0.2905 | Val Loss: 0.2835 | Val Acc: 0.9161 | LR: 0.000006
+Epoch 11/22: Train Loss: 0.2930 | Val Loss: 0.2849 | Val Acc: 0.9155 | LR: 0.000205
+Epoch 12/22: Train Loss: 0.2924 | Val Loss: 0.2842 | Val Acc: 0.9163 | LR: 0.000204
+Epoch 13/22: Train Loss: 0.2917 | Val Loss: 0.2838 | Val Acc: 0.9157 | LR: 0.000200
+Epoch 14/22: Train Loss: 0.2915 | Val Loss: 0.2839 | Val Acc: 0.9151 | LR: 0.000194
+⏹️ Early stopping at epoch 14 (no improvement for 5 epochs)
+✅ Training complete. Best model saved to models/best_model.pth
+
+======================================================================
+Step 5: Evaluating on Test Set
+======================================================================
+⚠️ Windows detected: Forced num_workers=0 (Multiprocessing disabled for stability)
+
+======================================================================
+Running Final Evaluation...
+======================================================================
+
+Test Results:
+  Accuracy:  0.9170
+  F1-Score:  0.9166
+  Precision: 0.9169
+  Recall:    0.9170
+
+Confusion Matrix:
+[[ 83210  12295]
+ [  7891 139740]]
+
+Detailed Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.9134    0.8713    0.8918     95505
+           1     0.9191    0.9465    0.9326    147631
+
+    accuracy                         0.9170    243136
+   macro avg     0.9163    0.9089    0.9122    243136
+weighted avg     0.9169    0.9170    0.9166    243136
+
+📊 Training history plot saved to results/training_history.png
+
+======================================================================
+Training Complete!
+======================================================================
+Best model saved to: models/best_model.pth
+Results saved to: results/
+
+✅ Log file saved to: results\training_log_20251124_044917.txt
+
+======================================================================
+Training Log Ended: 2025-11-24 09:57:59
+Exit Status: SUCCESS
+======================================================================
